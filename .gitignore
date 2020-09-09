@@ -1,0 +1,4 @@
+*.log
+*.tx
+*.block
+network/crypto-config/
