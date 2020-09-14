@@ -25,13 +25,14 @@ function printHelp() {
   echo "Usage: "
   echo "  network.sh <Mode>"
   echo "    Modes:"
-  echo "      "$'\e[0;32m'up$'\e[0m' - bring up fabric orderer and peer nodes. No channel is created
-  echo "      "$'\e[0;32m'down$'\e[0m' - clear the network with docker-compose down
-  echo "      "$'\e[0;32m'restart$'\e[0m' - restart the network
+  echo "      "$'\e[0;32m'up$'\e[0m' - brings up fabric orderer and peer nodes. with channel creation.
+  echo "      "$'\e[0;32m'down$'\e[0m' - clears the network with docker-compose down
+  echo "      "$'\e[0;32m'restart$'\e[0m' - restarts the network
   echo "      "$'\e[0;32m'clear$'\e[0m' - clears the state of the blockchain
-  echo "      "$'\e[0;32m'monitor$'\e[0m' - monitors the network
+  echo "      "$'\e[0;32m'netstat$'\e[0m' - checks network status
   echo "      "$'\e[0;32m'deployCC$'\e[0m' - installs and instantiate the chaincode
-  echo "      "$'\e[0;32m'createChannel$'\e[0m' - installs and instantiate the chaincode
+  echo "      "$'\e[0;32m'invokeCC$'\e[0m' - invokes the chaincode
+  echo "      "$'\e[0;32m'createC$'\e[0m' - creates channel
 }
 
 function setVariables() {
