@@ -2,3 +2,4 @@
 *.tx
 *.block
 network/crypto-config/
+*.tar.gz

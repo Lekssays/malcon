@@ -193,7 +193,7 @@ function invokeChaincode() {
   peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $COMPOSE_PROJECT_NAME  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:8051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:9051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt -c '{"function":"initLedger","Args":[]}'
 
   # JUST TO TEST
-  peer chaincode query -C mychannel -n malcon -c '{"Args":["getAllAssets"]}'
+  peer chaincode query -C mychannel -n malcon -c '{"Args":["getAllMalware"]}'
 }
 
 if [[ $# -lt 1 ]] ; then
