@@ -3,3 +3,4 @@
 *.block
 network/crypto-config/
 *.tar.gz
+*.pem
