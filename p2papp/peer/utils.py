@@ -8,7 +8,7 @@ from Crypto.PublicKey import RSA
 
 PUBKEYS = "./pubkeys/"
 
-def get_pubkey(org: str):
+def get_pubkey(org: str) -> bytes:
     # TODO: get public key from the ledger
     with open (PUBKEYS + org + "_pubkey.pem", "r") as myfile:
         public_key = myfile.read()
@@ -44,7 +44,7 @@ def get_tokens(access_token: str) -> list:
             tokens.append(payload[key])
     return tokens
 
-def get_organizations():
+def get_organizations() -> int:
     # TODO: get how many organizations are there from the ledger
     orgs = 0
     return orgs
