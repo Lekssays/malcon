@@ -128,7 +128,9 @@ services:
     command: /bin/bash
     volumes:
     - /var/run/:/host/var/run/
-    - ./../chaincode:/opt/gopath/src/malcon/chaincode
+    - ./../chaincodes/malwarecc:/opt/gopath/src/malcon/chaincodes/malwarecc
+    - ./../chaincodes/pubkeycc:/opt/gopath/src/malcon/chaincodes/pubkeycc
+    - ./../chaincodes/strategycc:/opt/gopath/src/malcon/chaincodes/strategycc
     - ./../:/opt/gopath/src/malcon/
     networks:
     - basic

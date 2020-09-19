@@ -1,4 +1,4 @@
-module github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-go
+module github.com/Lekssays/malcon/strategychaincode
 
 go 1.14
 
