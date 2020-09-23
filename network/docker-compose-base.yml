@@ -7,7 +7,7 @@ services:
     - FABRIC_LOGGING_SPEC=debug
     - GODEBUG=netdns=go
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-    - FABRIC_LOGGING_SPEC=INFO
+    - FABRIC_LOGGING_SPEC=DEBUG
     - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
     - CORE_CHAINCODE_LOGGING_SHIM=DEBUG
     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp/

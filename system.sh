@@ -76,7 +76,7 @@ function generateBlocks() {
 function networkUp() {
   cd $PROJECT_DIRECTORY/network/
   
-  docker-compose -f docker-compose.yml up -d ca.example.com orderer.example.com
+  docker-compose -f docker-compose.yml up -d ca.example.com ca.org1.example.com ca.org2.example.com ca.org3.example.com orderer.example.com
 
   sleep 3
 

@@ -4,3 +4,5 @@
 network/crypto-config/
 *.tar.gz
 *.pem
+client/node_modules/
+client/wallet/
