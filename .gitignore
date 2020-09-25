@@ -6,3 +6,7 @@ network/crypto-config/
 *.pem
 client/node_modules/
 client/wallet/
+voting/__pycache__
+voting/models/__pycache__
+seed.txt
+address.txt
