@@ -12,7 +12,7 @@ def main():
     socket.subscribe('sn')
     print ("Socket connected")
     
-    address = "KEOZKTNR9ZZVBLNJSBBTVGKGNFYLG9YWWEHFLTREPVAIXTMDTBJKYPXQDHN9QWJGPMQVVAAFSFCFHVCWA"
+    address = "MTPSOKOWNDRQTU9HVGRVOIHAKCYSJUWTS9ZUOSKDDVHRYUBBVADWUSUTSRCNPQGGFZCMRCWKWVPJXAWZC"
     print ("Listening for live transaction on address ", address)
     while True:
         message = socket.recv()

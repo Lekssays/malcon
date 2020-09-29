@@ -202,6 +202,8 @@ function queryChainecode() {
   setVariables 1
   if [ "$1" == "malware" ]; then
     peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllMalware"]}'
+    echo "========================================="
+    peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllActions"]}'
   elif [ "$1" == "pubkey" ]; then
     peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllPubkeys"]}'
   elif [ "$1" == "strategy" ]; then
