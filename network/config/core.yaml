@@ -79,7 +79,7 @@ peer:
         # Important: The endpoints here have to be endpoints of peers in the same
         # organization, because the peer would refuse connecting to these endpoints
         # unless they are in the same organization as the peer.
-        bootstrap: 127.0.0.1:7051
+        bootstrap: 0.0.0.0:7051
 
         # NOTE: orgLeader and useLeaderElection parameters are mutual exclusive.
         # Setting both to true would result in the termination of the peer
@@ -308,7 +308,7 @@ peer:
     # to match the name of one of the MSPs in each of the channel
     # that this peer is a member of. Otherwise this peer's messages
     # will not be identified as valid by other nodes.
-    localMspId: SampleOrg
+    localMspId: Org1MSP
 
     # CLI common client config options
     client:
@@ -485,7 +485,7 @@ chaincode:
         name:
 
     # Generic builder environment, suitable for most chaincode types
-    builder: hyperledger/fabric-ccenv:2.2
+    builder: hyperledger/fabric-ccenv:2.0
 
     # Enables/disables force pulling of the base docker images (listed below)
     # during user chaincode instantiation.
@@ -494,7 +494,7 @@ chaincode:
 
     golang:
         # golang will never need more than baseos
-        runtime: hyperledger/fabric-baseos:amd64-2.2.0
+        runtime: hyperledger/fabric-baseos:amd64-2.0.0
 
         # whether or not golang chaincode should be linked dynamically
         dynamicLink: false
@@ -502,14 +502,14 @@ chaincode:
     car:
         # car may need more facilities (JVM, etc) in the future as the catalog
         # of platforms are expanded.  For now, we can just use baseos
-        runtime: hyperledger/fabric-baseos:amd64-2.2.0
+        runtime: hyperledger/fabric-baseos:amd64-2.0.0
 
     java:
         # This is an image based on java:openjdk-8 with addition compiler
         # tools added for java shim layer packaging.
         # This image is packed with shim layer libraries that are necessary
         # for Java chaincode runtime.
-        runtime: hyperledger/fabric-javaenv:amd64-2.2.0
+        runtime: hyperledger/fabric-javaenv:amd64-2.0
 
     node:
         # need node.js engine at runtime, currently available in baseimage
@@ -548,8 +548,6 @@ chaincode:
     system:
         cscc: enable
         lscc: enable
-        escc: enable
-        vscc: enable
         qscc: enable
         _lifecycle: enable
 
@@ -644,7 +642,7 @@ ledger:
 ###############################################################################
 operations:
     # host and port for the operations server
-    listenAddress: 127.0.0.1:9443
+    listenAddress: 0.0.0.0:9443
 
     # TLS configuration for the operations endpoint
     tls:
@@ -683,7 +681,7 @@ metrics:
         network: udp
 
         # statsd server address
-        address: 127.0.0.1:8125
+        address: 0.0.0.0:8125
 
         # the interval at which locally cached counters and gauges are pushed
         # to statsd; timings are pushed immediately

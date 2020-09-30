@@ -1,4 +1,4 @@
-module github.com/Lekssays/malcon/strategychaincode
+module github.com/Lekssays/malcon/chaincodes/strategycc
 
 go 1.14
 

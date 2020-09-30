@@ -172,15 +172,15 @@ function deployChaincode() {
   for orgId in 1 2 3
   do
     setVariables $orgId
-    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA
+    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
   done
 
   echo "Check for $1 commit readiness..."
-  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --output json
+  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')" --output json
 
-  # FIXME: make this more modular
+  # TODO: make this more modular and modify endorsement policy in PROD
   echo "Committing $1 chaincode definition to channel..."
-  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:8051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:9051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
+  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:8051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:9051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
 
   peer lifecycle chaincode querycommitted --channelID $CHANNEL_NAME --name $1 --cafile $ORDERER_CA
 }
@@ -192,8 +192,6 @@ function invokeChaincode() {
   echo "Invoke $1 chaincode..."
   peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:8051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:9051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
 
-  # JUST TO TEST
-  #peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllStrategies"]}'
 }
 
 function queryChainecode() {
@@ -202,18 +200,20 @@ function queryChainecode() {
   setVariables 1
   if [ "$1" == "malware" ]; then
     peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllMalware"]}'
-    echo "========================================="
-    peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllActions"]}'
   elif [ "$1" == "pubkey" ]; then
     peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllPubkeys"]}'
   elif [ "$1" == "strategy" ]; then
     peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllStrategies"]}'
+  elif [ "$1" == "action" ]; then
+  peer chaincode query -C mychannel -n $1 -c '{"Args":["getAllActions"]}'
   else
     peer chaincode query -C mychannel -n malware -c '{"Args":["getAllMalware"]}'
     sleep 1
     peer chaincode query -C mychannel -n pubkey -c '{"Args":["getAllPubkeys"]}'
     sleep 1
     peer chaincode query -C mychannel -n strategy -c '{"Args":["getAllStrategies"]}'
+    sleep 1
+    peer chaincode query -C mychannel -n action -c '{"Args":["getAllActions"]}'
   fi
 }
 
@@ -238,11 +238,15 @@ if [ "${MODE}" == "up" ]; then
   sleep 2
   deployChaincode "strategy"
   sleep 2
+  deployChaincode "action"
+  sleep 2
   invokeChaincode "malware"
   sleep 2
   invokeChaincode "pubkey"
   sleep 2
   invokeChaincode "strategy"
+  sleep 2
+  invokeChaincode "action"
 elif [ "${MODE}" == "down" ]; then
   networkDown
 elif [ "${MODE}" == "clear" ]; then
@@ -263,6 +267,7 @@ elif [ "${MODE}" == "invokeCC" ]; then
   sleep 2
   invokeChaincode "strategy"
   sleep 2
+  invokeChaincode "action"
 elif [ "${MODE}" == "netstat" ]; then
   checkNetworkStatus
 elif [ "${MODE}" == "createC" ]; then
@@ -282,13 +287,17 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 2
   deployChaincode "strategy"
   sleep 2
+  deployChaincode "action"
+  sleep 2
   invokeChaincode "malware"
   sleep 2
   invokeChaincode "pubkey"
   sleep 2
   invokeChaincode "strategy"
+  sleep 2
+  invokeChaincode "action"
 elif [ "${MODE}" == "query" ]; then
-  queryChainecode
+  queryChainecode "action"
 else
   printHelp
   exit 1

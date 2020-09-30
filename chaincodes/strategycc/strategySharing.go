@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/Lekssays/malcon/strategychaincode/chaincode"
+	"github.com/Lekssays/malcon/chaincodes/strategycc/chaincode"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 

@@ -1,4 +1,4 @@
-module github.com/Lekssays/malcon/pubkeychaincode
+module github.com/Lekssays/malcon/chaincodes/pubkeycc
 
 go 1.14
 
