@@ -1,28 +1,26 @@
 #!/usr/bin/python3
+import configparser
 import time
+import random
 import utils
 
 def main():
     print("malware containment project")
+    config = configparser.ConfigParser()
+    config.read('config.ini')
 
-    # TODO: Get the following variable from ELECTION CHANNEL (shared by Fabric SC)
-    candidate = ""
-    election_id = ""
-    issuer = ""
-    tx_id = ""
+    # Register Peers
+    endpoint = config['PEER']['ENDPOINT']
+    core_id = config['PEER']['CORE_ID']
+    with open("public_key.pem", "r") as f:
+        pubkey = f.read()
+    iota_addr = utils.MYADDRESS
+    register_peer_tx = utils.register_peer(endpoint=endpoint, public_key=pubkey, core_id=core_id, address=iota_addr)
+    print("Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx))
 
-    tx1 = utils.send_request(tx_id=tx_id, issuer=issuer, election_id=election_id)
-    print(tx1)
-    time.sleep(4)
-    tx2 = utils.send_vote(election_id=election_id, candidate=candidate)
-    print(tx2)
-    
-    time.sleep(4)
-    print(utils.get_transactions_by_tag(tag="MALCONVOTE"))
-
-    time.sleep(3)
-    tx3 = utils.register_peer(endpoint="0.0.0.0:8556", public_key="some pk", core_id="peer0.org1.example.com")
-    print(tx3)
+    # Store Peers Locally
+    peers = utils.get_transactions_by_tag('MALCONPEER')
+    utils.store_peers(peers=peers['hashes'])
 
 
 if __name__ == "__main__":

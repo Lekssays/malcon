@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import json
+import redis
 import subprocess
 import os.path
 import urllib3
@@ -14,6 +15,7 @@ from models import Vote, Peer, Request
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
+r = redis.Redis()
 
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
@@ -52,7 +54,7 @@ def get_transactions_by_tag(tag: str):
         body=command
     )
     results = json.loads(response.data.decode('utf-8'))
-    return json.dumps(results, indent=1, sort_keys=True)
+    return results['hashes']
 
 def send_transaction(address: str, message: TryteString, tag: str) -> str:
     tx = ProposedTransaction(
@@ -72,7 +74,8 @@ def build_transaction(payload: str):
 def read_transaction( tx_hash: str):
     bundle = API.get_bundles(tx_hash)
     message = bundle['bundles'][0].tail_transaction.signature_message_fragment
-    return message.decode()
+    message = message.decode().replace("\'", "\"")
+    return json.loads(message)
 
 def send_request(tx_id: str, issuer: str, election_id: str):
     REQUSTTAG = "MALCONREQ"
@@ -92,12 +95,31 @@ def send_vote(election_id: str, candidate: str):
     address, message = build_transaction(payload=vote.get())
     return send_transaction(address=address, message=message, tag=VOTETAG)
 
-def register_peer(endpoint: str, public_key: str, core_id: str):
+def register_peer(endpoint: str, public_key: str, core_id: str, address: str):
     PEERTAG = "MALCONPEER"
     peer = Peer()
     peer.endpoint = endpoint
     peer.public_key = public_key
     peer.core_id = core_id
-    peer.address = get_address()
+    peer.address = address
     address, message = build_transaction(payload=peer.get())
     return send_transaction(address=address, message=message, tag=PEERTAG)
+
+def store_hash(label: str, txhash: str):
+    r.sadd(label, txhash)
+
+def ismember(label: str, txhash: str):
+    return r.sismember(label, txhash)
+
+def store_peers(peers: list):
+    for peer in peers:
+        r.sadd("peers", peer)
+
+def get_voting_peers(origin: str):
+    voters = []
+    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    for tx_hash in transactions:
+        peer = read_transaction(tx_hash=tx_hash)
+        if peer['core_id'] != origin:
+            voters.append(tx_hash)
+    return voters
