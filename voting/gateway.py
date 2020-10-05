@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import configparser
+import listeners
 import time
+import threading
 import random
 import utils
 
@@ -21,6 +23,17 @@ def main():
     # Store Peers Locally
     peers = utils.get_transactions_by_tag('MALCONPEER')
     utils.store_peers(peers=peers['hashes'])
+
+    # Start all listeners
+    elec_thread = threading.Thread(target=listeners.elections)
+    reqs_thread = threading.Thread(target=listeners.requests)
+    votes_thread = threading.Thread(target=listeners.votes)
+    exec_thread = threading.Thread(target=listeners.executors)
+    elec_thread.start()
+    reqs_thread.start()
+    votes_thread.start()
+    exec_thread.start()
+
 
 
 if __name__ == "__main__":

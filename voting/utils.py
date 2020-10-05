@@ -1,17 +1,22 @@
 #!/usr/bin/python3
+import datetime
 import json
+import os.path
+import random
 import redis
 import subprocess
-import os.path
 import urllib3
 
+from collections import defaultdict
+from Crypto.PublicKey import RSA
+from hashlib import sha512
 from iota import Iota
 from iota import ProposedTransaction
 from iota import Address
 from iota import Tag
 from iota import TryteString
 
-from models import Vote, Peer, Request
+from models import Vote, Peer, Request, Executor
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
@@ -86,12 +91,13 @@ def send_request(tx_id: str, issuer: str, election_id: str):
     address, message = build_transaction(payload=request.get())
     return send_transaction(address=address, message=message, tag=REQUSTTAG)
 
-def send_vote(election_id: str, candidate: str):
+def send_vote(election_id: str, candidate: str, eround: int):
     VOTETAG = "MALCONVOTE"
     vote = Vote()
     vote.voter = MYADDRESS
     vote.election_id = election_id
     vote.candidate = candidate
+    vote.eround = eround
     address, message = build_transaction(payload=vote.get())
     return send_transaction(address=address, message=message, tag=VOTETAG)
 
@@ -123,3 +129,117 @@ def get_voting_peers(origin: str):
         if peer['core_id'] != origin:
             voters.append(tx_hash)
     return voters
+
+def claim_executor(election_id: str, eround: int, votes: list):
+    EXECUTORTAG = "MALCONEXEC"
+    executor = Executor()
+    executor.election_id = election_id
+    executor.eround = eround
+    executor.votes = votes
+    executor.address = MYADDRESS
+    address, message = build_transaction(payload=executor.get())
+    return send_transaction(address=address, message=message, tag=EXECUTORTAG)
+
+def generate_token():
+    timestamp = datetime.datetime.now() + datetime.timedelta(seconds=500)
+    timestamp = str(timestamp.timestamp())
+    nonce = str(random.randint(100000, 999999))
+    token = nonce + "_" + timestamp
+    token = token.split(".")
+    token = token[0]
+
+    with open("private_key.pem", "rb") as k:
+        privatekey = RSA.importKey(k.read())
+    
+    thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
+    signature = pow(thash, privatekey.d, privatekey.n)
+    return token, signature
+
+# FIXME: MOVE THIS TO CLIENT NOT ADMIN
+def verify_token(token: str, signature: float, issuer_address: str):
+    token = token.split("_")
+    current_timestamp = int(datetime.datetime.now().timestamp())
+    token_timestamp = int(token[1])
+    if current_timestamp - token_timestamp > 500:
+        return False
+    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    for tx_hash in transactions:
+        peer = read_transaction(tx_hash=tx_hash)
+        if peer['address'] == issuer_address:
+            pubkey = RSA.importKey(peer['public_key'].encode())
+            thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
+            hashFromSignature = pow(signature, pubkey.e, pubkey.n)
+            return thash == hashFromSignature
+    return False
+
+def get_votes(election_id: str, address: str):
+    transactions = get_transactions_by_tag(tag="MALCONVOTE")
+    leaderboard = defaultdict(lambda : 0)
+    for tx_hash in transactions:
+        vote = read_transaction(tx_hash=tx_hash)
+        if election_id == vote['election_id']:
+            leaderboard[vote['candidate']] += 1
+    return leaderboard[address]
+
+def get_election_winner(election_id: str):
+    transactions = get_transactions_by_tag(tag="MALCONVOTE")
+    leaderboard = defaultdict(lambda : 0)
+    for tx_hash in transactions:
+        vote = read_transaction(tx_hash=tx_hash)
+        if election_id == vote['election_id']:
+            leaderboard[vote['candidate']] += 1
+    
+    max_votes = -1
+    winner = ""
+    for candidate in leaderboard:
+        if leaderboard[candidate] >= max_votes:
+            max_votes = leaderboard[candidate]
+            winner = candidate
+    return winner
+
+def verify_executor(election_id: str, executor_address: str):
+    winner = get_election_winner(election_id=election_id)
+    if winner == executor_address:
+        return True
+    return False
+
+def send_token(executor_address: str):
+    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    token, signature = generate_token()
+    for tx_hash in transactions:
+        peer = read_transaction(tx_hash=tx_hash)
+        if peer['address'] == executor_address:
+            http = urllib3.PoolManager()
+            payload = json.dumps({"token": token, "signature": signature})
+            response = http.request(
+                'POST', peer['endpoint'],
+                headers={'Content-Type': 'application/json'},
+                body=payload
+            )
+            return response
+
+def isElecInitiated(election_id: str):
+    transactions = get_transactions_by_tag(tag="MALCONREQ")
+    for tx_hash in transactions:
+        request = read_transaction(tx_hash=tx_hash)
+        if request['election_id'] == election_id:
+            return True
+    return False
+
+def isElecFinal(election_id: str):
+    transactions = get_transactions_by_tag(tag="MALCONVOTE")
+    leaderboard = defaultdict(lambda : 0)
+    for tx_hash in transactions:
+        vote = read_transaction(tx_hash=tx_hash)
+        if election_id == vote['election_id']:
+            leaderboard[vote['candidate']] += 1
+    
+    max_votes = -1
+    winners = []
+    for candidate in leaderboard:
+        if leaderboard[candidate] >= max_votes:
+            max_votes = leaderboard[candidate]
+            winners.append(candidate)
+    if len(winners) > 1:
+        return False, winners
+    return True, winners

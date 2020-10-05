@@ -4,8 +4,8 @@
 network/crypto-config/
 *.tar.gz
 *.pem
-client/node_modules/
-client/wallet/
+*/node_modules/
+*/wallet/
 voting/__pycache__
 voting/models/__pycache__
 seed.txt
