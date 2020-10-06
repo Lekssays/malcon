@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import configparser
 import datetime
 import json
 import os.path
@@ -21,6 +22,8 @@ from models import Vote, Peer, Request, Executor
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
 r = redis.Redis()
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
@@ -155,23 +158,6 @@ def generate_token():
     signature = pow(thash, privatekey.d, privatekey.n)
     return token, signature
 
-# FIXME: MOVE THIS TO CLIENT NOT ADMIN
-def verify_token(token: str, signature: float, issuer_address: str):
-    token = token.split("_")
-    current_timestamp = int(datetime.datetime.now().timestamp())
-    token_timestamp = int(token[1])
-    if current_timestamp - token_timestamp > 500:
-        return False
-    transactions = get_transactions_by_tag(tag="MALCONPEER")
-    for tx_hash in transactions:
-        peer = read_transaction(tx_hash=tx_hash)
-        if peer['address'] == issuer_address:
-            pubkey = RSA.importKey(peer['public_key'].encode())
-            thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
-            hashFromSignature = pow(signature, pubkey.e, pubkey.n)
-            return thash == hashFromSignature
-    return False
-
 def get_votes(election_id: str, address: str):
     transactions = get_transactions_by_tag(tag="MALCONVOTE")
     leaderboard = defaultdict(lambda : 0)
@@ -203,14 +189,14 @@ def verify_executor(election_id: str, executor_address: str):
         return True
     return False
 
-def send_token(executor_address: str):
+def send_token(executor_address: str, election_id: str):
     transactions = get_transactions_by_tag(tag="MALCONPEER")
     token, signature = generate_token()
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         if peer['address'] == executor_address:
             http = urllib3.PoolManager()
-            payload = json.dumps({"token": token, "signature": signature})
+            payload = json.dumps({"token": token, "signature": signature, "issuer": config['PEER']['CORE_ID'], "election_id": election_id})
             response = http.request(
                 'POST', peer['endpoint'],
                 headers={'Content-Type': 'application/json'},

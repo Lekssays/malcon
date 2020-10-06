@@ -85,6 +85,6 @@ def executors():
                 executor = utils.read_transaction(tx_hash=tx_hash)
                 if utils.verify_executor(election_id=executor['election_id'], executor_address=executor['address']):
                     print("MALCONEXEC: Sending {}'s token to {}".format(config['PEER']['CORE_ID'], executor['address']))
-                    utils.send_token(executor_address=executor['address'])
+                    utils.send_token(executor_address=executor['address'], election_id=executor['election_id'])
         print("MALCONEXEC: Sleeping for 5 seconds...")
         time.sleep(5)
