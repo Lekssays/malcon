@@ -1,17 +1,17 @@
 #!/usr/bin/python3
-import configparser
 import json
 import math
 import redis
 import urllib3
 
+from environs import Env
 from iota import Iota
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
 r = redis.Redis()
-config = configparser.ConfigParser()
-config.read('config.ini')
+env = Env()
+env.read_env()
 
 def get_transactions_by_tag(tag: str):
     http = urllib3.PoolManager()
@@ -47,7 +47,7 @@ def get_tokens(election_id: str):
 
 def prepare_payload(election_id: str):
     tokens = get_tokens(election_id=election_id)
-    issuer = config['PEER']['CORE_ID']
+    issuer = env("CORE_PEER_ID")
     payload = {
         'tokens': tokens,
         'election_id': election_id,

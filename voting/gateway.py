@@ -1,19 +1,21 @@
 #!/usr/bin/python3
-import configparser
 import listeners
 import time
 import threading
 import random
 import utils
 
+from environs import Env
+
+env = Env()
+env.read_env()
+
 def main():
     print("malware containment project")
-    config = configparser.ConfigParser()
-    config.read('config.ini')
 
     # Register Peers
-    endpoint = config['PEER']['ENDPOINT']
-    core_id = config['PEER']['CORE_ID']
+    endpoint = env("CORE_PEER_ENDPOINT")
+    core_id = env("CORE_PEER_ID")
     with open("public_key.pem", "r") as f:
         pubkey = f.read()
     iota_addr = utils.MYADDRESS
@@ -33,8 +35,6 @@ def main():
     reqs_thread.start()
     votes_thread.start()
     exec_thread.start()
-
-
 
 if __name__ == "__main__":
     main()

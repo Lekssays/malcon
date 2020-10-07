@@ -1,12 +1,13 @@
 #!/usr/bin/python3
-import configparser
 import time
 import random
 import urllib3
 import utils
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+from environs import Env
+
+env = Env()
+env.read_env()
 
 def elections():
     print("Listening on MALCONELEC tag...")
@@ -37,10 +38,10 @@ def requests():
                 utils.store_hash(label="requests", txhash=tx_hash)
                 tx = utils.read_transaction(tx_hash=tx_hash)
                 print("MALCONREQ: Sending vote...")
-                candidates = utils.get_voting_peers(origin=config['PEER']['CORE_ID'])
+                candidates = utils.get_voting_peers(origin=env("CORE_PEER_ID"))
                 candidate = candidates[random.randint(0, len(candidates))]
                 utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=1)
-                print('MALCONREQ: Peer {} voted successfully on candidate {} in election {}'.format(config['PEER']['CORE_ID'], candidate, tx['election_id']))
+                print('MALCONREQ: Peer {} voted successfully on candidate {} in election {}'.format(env("CORE_PEER_ID"), candidate, tx['election_id']))
         print("MALCONREQ: Sleeping for 5 seconds...")
         time.sleep(5)    
 
@@ -59,14 +60,14 @@ def votes():
 
                 isFinal, winners = utils.isElecFinal(election_id=tx['election_id'])
                 if not isFinal:
-                    candidates = list(set(utils.get_voting_peers(origin=config['PEER']['CORE_ID'])) & set(winners))
+                    candidates = list(set(utils.get_voting_peers(origin=env("CORE_PEER_ID"))) & set(winners))
                     candidate = candidates[random.randint(0, len(candidates))]
                     utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=eround+1)                     
                 else:
                     winner = utils.get_election_winner(election_id=tx['election_id'])
                     if winner == utils.MYADDRESS:
                         votes = utils.get_votes(election_id=tx['election_id'], address=utils.MYADDRESS)
-                        print("MALCONVOTE: Peer {} claiming executor after winner election {}".format(config['PEER']['CORE_ID'], tx['election_id']))
+                        print("MALCONVOTE: Peer {} claiming executor after winner election {}".format(env("CORE_PEER_ID"), tx['election_id']))
                         utils.claim_executor(election_id=tx['election_id'], eround=eround, votes=votes)
                     eround = 1
         print("MALCONVOTE: Sleeping for 5 seconds...")
@@ -84,7 +85,7 @@ def executors():
                 utils.store_hash(label="executors", txhash=tx_hash)
                 executor = utils.read_transaction(tx_hash=tx_hash)
                 if utils.verify_executor(election_id=executor['election_id'], executor_address=executor['address']):
-                    print("MALCONEXEC: Sending {}'s token to {}".format(config['PEER']['CORE_ID'], executor['address']))
+                    print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['address']))
                     utils.send_token(executor_address=executor['address'], election_id=executor['election_id'])
         print("MALCONEXEC: Sleeping for 5 seconds...")
         time.sleep(5)

@@ -1,15 +1,15 @@
 #!/usr/bin/python3
-import configparser
 import flask
 import helper
 
+from environs import Env
 from flask import request
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+env = Env()
+env.read_env()
 
 @app.route('/', methods=['GET'])
 def home():
@@ -35,4 +35,4 @@ def receive_tokens():
         'message': 'failure' 
     }
 
-app.run(host='0.0.0.0', port=int(config['PEER']['PORT']))
+app.run(host='0.0.0.0', port=env.int("CORE_PEER_PORT"))

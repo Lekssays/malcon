@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import configparser
 import datetime
 import json
 import os.path
@@ -10,6 +9,7 @@ import urllib3
 
 from collections import defaultdict
 from Crypto.PublicKey import RSA
+from environs import Env
 from hashlib import sha512
 from iota import Iota
 from iota import ProposedTransaction
@@ -22,8 +22,8 @@ from models import Vote, Peer, Request, Executor
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
 r = redis.Redis()
-config = configparser.ConfigParser()
-config.read('config.ini')
+env = Env()
+env.read_env()
 
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
@@ -196,7 +196,7 @@ def send_token(executor_address: str, election_id: str):
         peer = read_transaction(tx_hash=tx_hash)
         if peer['address'] == executor_address:
             http = urllib3.PoolManager()
-            payload = json.dumps({"token": token, "signature": signature, "issuer": config['PEER']['CORE_ID'], "election_id": election_id})
+            payload = json.dumps({"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": election_id})
             response = http.request(
                 'POST', peer['endpoint'],
                 headers={'Content-Type': 'application/json'},

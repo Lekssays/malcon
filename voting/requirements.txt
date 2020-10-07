@@ -1,3 +1,5 @@
 redis
 urllib3
 pyota
+flask
+environs
