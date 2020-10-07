@@ -17,6 +17,9 @@ def home():
 
 @app.route('/tokens', methods=['POST'])
 def receive_tokens():
+    if not helper.isRegistred():
+        helper.register_target_peer()
+
     data = request.json
     tokens = data['tokens']
     election_id = data['election_id']

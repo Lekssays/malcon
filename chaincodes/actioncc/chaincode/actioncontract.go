@@ -34,6 +34,7 @@ type Election struct {
 	ID        string `json:"ID"`
 	ActionID  string `json:"action_id"`
 	Timestamp string `json:"timestamp"`
+	Target    string `json:"string"`
 }
 
 // Action defines the structure of action entry
@@ -83,7 +84,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // CreateElection initiates an election
-func CreateElection(electionID string, actionID string, timestamp string) (string, bool) {
+func CreateElection(electionID string, actionID string, timestamp string, target string) (string, bool) {
 	backend := logging.NewLogBackend(os.Stderr, "", 0)
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backend, backendFormatter)
@@ -102,7 +103,7 @@ func CreateElection(electionID string, actionID string, timestamp string) (strin
 	// Just a dummy address and a seed that is not used since the transaction is has zero value (expected by iota)
 	const address = trinary.Trytes("ZLGVEQ9JUZZWCZXLWVNTHBDX9G9KZTJP9VEERIIFHY9SIQKYBVAHIMLHXPQVE9IXFDDXNHQINXJDRPFDXNYVAPLZAW")
 	const seed = trinary.Trytes("JBN9ZRCOH9YRUGSWIQNZWAIFEZUBDUGTFPVRKXWPAUCEQQFS9NHPQLXCKZKRHVCCUZNF9CZZWKXRZVCWQ")
-	var data = fmt.Sprintf("{'election_id' : '%s', 'action_id': '%s', 'timestamp': '%s'}", electionID, actionID, timestamp)
+	var data = fmt.Sprintf("{'election_id' : '%s', 'action_id': '%s', 'timestamp': '%s', 'target': '%s'}", electionID, actionID, timestamp, target)
 	message, err := converter.ASCIIToTrytes(data)
 
 	if err != nil {
@@ -156,6 +157,10 @@ func (s *SmartContract) CreateAction(ctx contractapi.TransactionContextInterface
 	strategyID := "OLGSLZJTSPRXLNNCKERMB"
 	timestamp := fmt.Sprintf("%d", time.Now().Unix())
 
+	// TODO: get target from invoking malware by malware ID
+	// TODO: Create an action for every nerby peer
+	target := "peer0.org1.example.com"
+
 	rand.Seed(time.Now().UTC().UnixNano())
 	ra := RandomNumber(10)
 	id := fmt.Sprintf("AC_%s", ra)
@@ -178,7 +183,7 @@ func (s *SmartContract) CreateAction(ctx contractapi.TransactionContextInterface
 		return "", err
 	}
 
-	txid, isSubmitted := CreateElection(electionID, id, timestamp)
+	txid, isSubmitted := CreateElection(electionID, id, timestamp, target)
 	if isSubmitted == false {
 		return "", fmt.Errorf("CreateElection failed")
 	}

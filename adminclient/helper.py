@@ -60,7 +60,7 @@ def get_target_peer(election_id: str):
     for tx_hash in transactions:
         election = read_transaction(tx_hash=tx_hash)
         if election_id == election['election_id']:
-            target_peer_id = election['peer']
+            target_peer_id = election['target']
             peers = get_transactions_by_tag('MALCONTARPEER')
             for peer in peers:
                 if peer['core_id'] == target_peer_id:
