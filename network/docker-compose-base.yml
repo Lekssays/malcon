@@ -11,6 +11,7 @@ services:
     - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
     - CORE_CHAINCODE_LOGGING_SHIM=DEBUG
     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp/
+    - FLASK_APP=/client/app.py
     # Operations
     - CORE_METRICS_PROVIDER=prometheus
     # # the following setting starts chaincode containers on the same

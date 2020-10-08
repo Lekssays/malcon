@@ -21,9 +21,9 @@ from models import Vote, Peer, Request, Executor
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
-r = redis.Redis()
 env = Env()
 env.read_env()
+r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
@@ -86,7 +86,7 @@ def read_transaction( tx_hash: str):
     return json.loads(message)
 
 def send_request(tx_id: str, issuer: str, election_id: str):
-    REQUSTTAG = "MALCONREQ"
+    REQUSTTAG = "MALCONREQTS"
     request = Request()
     request.tx_id = tx_id
     request.issuer = MYADDRESS
@@ -95,7 +95,7 @@ def send_request(tx_id: str, issuer: str, election_id: str):
     return send_transaction(address=address, message=message, tag=REQUSTTAG)
 
 def send_vote(election_id: str, candidate: str, eround: int):
-    VOTETAG = "MALCONVOTE"
+    VOTETAG = "MALCONVOTETS"
     vote = Vote()
     vote.voter = MYADDRESS
     vote.election_id = election_id
@@ -105,7 +105,7 @@ def send_vote(election_id: str, candidate: str, eround: int):
     return send_transaction(address=address, message=message, tag=VOTETAG)
 
 def register_peer(endpoint: str, public_key: str, core_id: str, address: str):
-    PEERTAG = "MALCONPEER"
+    PEERTAG = "MALCONPEERTS"
     peer = Peer()
     peer.endpoint = endpoint
     peer.public_key = public_key
@@ -120,21 +120,17 @@ def store_hash(label: str, txhash: str):
 def ismember(label: str, txhash: str):
     return r.sismember(label, txhash)
 
-def store_peers(peers: list):
-    for peer in peers:
-        r.sadd("peers", peer)
-
 def get_voting_peers(origin: str):
     voters = []
-    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    transactions = get_transactions_by_tag(tag="MALCONPEERTS")
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         if peer['core_id'] != origin:
-            voters.append(tx_hash)
+            voters.append(peer['core_id'])
     return voters
 
 def claim_executor(election_id: str, eround: int, votes: list):
-    EXECUTORTAG = "MALCONEXEC"
+    EXECUTORTAG = "MALCONEXECTS"
     executor = Executor()
     executor.election_id = election_id
     executor.eround = eround
@@ -159,7 +155,7 @@ def generate_token():
     return token, signature
 
 def get_votes(election_id: str, address: str):
-    transactions = get_transactions_by_tag(tag="MALCONVOTE")
+    transactions = get_transactions_by_tag(tag="MALCONVOTETS")
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)
@@ -168,7 +164,7 @@ def get_votes(election_id: str, address: str):
     return leaderboard[address]
 
 def get_election_winner(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONVOTE")
+    transactions = get_transactions_by_tag(tag="MALCONVOTETS")
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)
@@ -190,7 +186,7 @@ def verify_executor(election_id: str, executor_address: str):
     return False
 
 def send_token(executor_address: str, election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    transactions = get_transactions_by_tag(tag="MALCONPEERTS")
     token, signature = generate_token()
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
@@ -205,7 +201,7 @@ def send_token(executor_address: str, election_id: str):
             return response
 
 def isElecInitiated(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONREQ")
+    transactions = get_transactions_by_tag(tag="MALCONREQTS")
     for tx_hash in transactions:
         request = read_transaction(tx_hash=tx_hash)
         if request['election_id'] == election_id:
@@ -213,7 +209,7 @@ def isElecInitiated(election_id: str):
     return False
 
 def isElecFinal(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONVOTE")
+    transactions = get_transactions_by_tag(tag="MALCONVOTETS")
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)

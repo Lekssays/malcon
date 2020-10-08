@@ -9,9 +9,9 @@ from iota import Iota
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
-r = redis.Redis()
 env = Env()
 env.read_env()
+r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
 def get_transactions_by_tag(tag: str):
     http = urllib3.PoolManager()

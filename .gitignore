@@ -9,3 +9,4 @@ network/crypto-config/
 **/__pycache__
 seed.txt
 address.txt
+*.rd.conf

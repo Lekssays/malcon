@@ -76,13 +76,16 @@ function generateBlocks() {
 function networkUp() {
   cd $PROJECT_DIRECTORY/network/
   
-  docker-compose -f docker-compose.yml up -d ca.example.com ca.org1.example.com ca.org2.example.com ca.org3.example.com orderer.example.com
+  #docker-compose -f docker-compose.yml up -d ca.example.com ca.org1.example.com ca.org2.example.com ca.org3.example.com orderer.example.com
 
-  sleep 3
+  #sleep 3
 
   docker-compose -f docker-compose.yml up -d peer0.org1.example.com peer0.org2.example.com peer0.org3.example.com cli
 
-  sleep 2
+  #sleep 3
+
+  #docker-compose -f docker-compose.yml up -d peer1.org1.example.com peer1.org2.example.com peer1.org3.example.com
+
   
   echo "**********************************"
   echo "********* Network Status *********"
@@ -94,6 +97,26 @@ function networkUp() {
 
 function checkNetworkStatus() {
   docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+}
+
+function deployWebServer() {
+  for orgId in 1 2 3
+  do
+    for peerId in 0 1
+    do
+      echo "Deploying web server on peer$peerId.org$orgId.example.com"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt && python3 /client/app.py"
+    done
+  done  
+}
+
+function deployVotingSystem() {
+  
+  for orgId in 1 2 3
+  do
+    echo "Deploying voting system on peer0.org$orgId.example.com"
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "/bin/sh /voting/generate_keypair.sh && python3 /voting/gateway.py"  
+  done
 }
 
 function createChannel() {
@@ -296,8 +319,14 @@ elif [ "${MODE}" == "restart" ]; then
   invokeChaincode "strategy"
   sleep 2
   invokeChaincode "action"
+  sleep 5
+  deployWebServer
+  sleep 20
+  deployVotingSystem
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
+elif [ "${MODE}" == "deployW" ]; then
+  deployWebServer
 else
   printHelp
   exit 1

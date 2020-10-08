@@ -1,5 +1,5 @@
 #!/bin/bash
 
-openssl genrsa -out private_key.pem 2048
+openssl genrsa -out ${CORE_PEER_ID}_private_key.pem 2048
 
-openssl rsa -in private_key.pem -outform PEM -pubout -out public_key.pem
+openssl rsa -in ${CORE_PEER_ID}_private_key.pem -outform PEM -pubout -out ${CORE_PEER_ID}_public_key.pem

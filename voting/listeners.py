@@ -12,7 +12,7 @@ env.read_env()
 def elections():
     print("Listening on MALCONELEC tag...")
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONELEC")
+        transactions = utils.get_transactions_by_tag(tag="MALCONELECTS")
         for tx_hash in transactions:
             if utils.ismember(label="processed", txhash=tx_hash):
                 continue
@@ -29,7 +29,7 @@ def elections():
 def requests():
     print("Listening on MALCONREQ tag...")
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONREQ")
+        transactions = utils.get_transactions_by_tag(tag="MALCONREQTS")
         for tx_hash in transactions:
             if utils.ismember(label="requests", txhash=tx_hash):
                 continue
@@ -39,7 +39,7 @@ def requests():
                 tx = utils.read_transaction(tx_hash=tx_hash)
                 print("MALCONREQ: Sending vote...")
                 candidates = utils.get_voting_peers(origin=env("CORE_PEER_ID"))
-                candidate = candidates[random.randint(0, len(candidates))]
+                candidate = candidates[random.randint(0, len(candidates) - 1)]
                 utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=1)
                 print('MALCONREQ: Peer {} voted successfully on candidate {} in election {}'.format(env("CORE_PEER_ID"), candidate, tx['election_id']))
         print("MALCONREQ: Sleeping for 5 seconds...")
@@ -49,7 +49,7 @@ def votes():
     print("Listening on MALCONVOTE tag...")
     eround = 1
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONVOTE")
+        transactions = utils.get_transactions_by_tag(tag="MALCONVOTETS")
         for tx_hash in transactions:
             if utils.ismember(label="votes", txhash=tx_hash):
                 continue
@@ -61,12 +61,12 @@ def votes():
                 isFinal, winners = utils.isElecFinal(election_id=tx['election_id'])
                 if not isFinal:
                     candidates = list(set(utils.get_voting_peers(origin=env("CORE_PEER_ID"))) & set(winners))
-                    candidate = candidates[random.randint(0, len(candidates))]
+                    candidate = candidates[random.randint(0, len(candidates) - 1)]
                     utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=eround+1)                     
                 else:
                     winner = utils.get_election_winner(election_id=tx['election_id'])
-                    if winner == utils.MYADDRESS:
-                        votes = utils.get_votes(election_id=tx['election_id'], address=utils.MYADDRESS)
+                    if winner == env("CORE_PEER_ID"):
+                        votes = utils.get_votes(election_id=tx['election_id'], address=env("CORE_PEER_ID"))
                         print("MALCONVOTE: Peer {} claiming executor after winner election {}".format(env("CORE_PEER_ID"), tx['election_id']))
                         utils.claim_executor(election_id=tx['election_id'], eround=eround, votes=votes)
                     eround = 1
@@ -76,7 +76,7 @@ def votes():
 def executors():
     print("Listening on MALCONEXEC tag...")
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONEXEC")
+        transactions = utils.get_transactions_by_tag(tag="MALCONEXECTS")
         for tx_hash in transactions:
             if utils.ismember(label="executors", txhash=tx_hash):
                 continue

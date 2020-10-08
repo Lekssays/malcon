@@ -19,9 +19,9 @@ from iota import TryteString
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
-r = redis.Redis()
 env = Env()
 env.read_env()
+r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)

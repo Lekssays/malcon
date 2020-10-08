@@ -13,7 +13,7 @@ env.read_env()
 
 @app.route('/', methods=['GET'])
 def home():
-    return "Welcome to MALCON admin client!"
+    return "Welcome to MALCON admin client for <b>{}</b>!".format(env("CORE_PEER_ID"))
 
 @app.route('/tokens', methods=['POST'])
 def receive_tokens():
