@@ -25,6 +25,9 @@ env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
+def get_tag(resource: str):
+    return "MALCON" + resource.upper() + env("VERSION")
+
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
     filename = "seed.txt"
@@ -86,33 +89,30 @@ def read_transaction( tx_hash: str):
     return json.loads(message)
 
 def send_request(tx_id: str, issuer: str, election_id: str):
-    REQUSTTAG = "MALCONREQTS"
     request = Request()
     request.tx_id = tx_id
     request.issuer = MYADDRESS
     request.election_id = election_id
     address, message = build_transaction(payload=request.get())
-    return send_transaction(address=address, message=message, tag=REQUSTTAG)
+    return send_transaction(address=address, message=message, tag=get_tag("REQ"))
 
 def send_vote(election_id: str, candidate: str, eround: int):
-    VOTETAG = "MALCONVOTETS"
     vote = Vote()
     vote.voter = MYADDRESS
     vote.election_id = election_id
     vote.candidate = candidate
     vote.eround = eround
     address, message = build_transaction(payload=vote.get())
-    return send_transaction(address=address, message=message, tag=VOTETAG)
+    return send_transaction(address=address, message=message, tag=get_tag("VOTE"))
 
 def register_peer(endpoint: str, public_key: str, core_id: str, address: str):
-    PEERTAG = "MALCONPEERTS"
     peer = Peer()
     peer.endpoint = endpoint
     peer.public_key = public_key
     peer.core_id = core_id
     peer.address = address
     address, message = build_transaction(payload=peer.get())
-    return send_transaction(address=address, message=message, tag=PEERTAG)
+    return send_transaction(address=address, message=message, tag=get_tag("PEER"))
 
 def store_hash(label: str, txhash: str):
     r.sadd(label, txhash)
@@ -122,22 +122,21 @@ def ismember(label: str, txhash: str):
 
 def get_voting_peers(origin: str):
     voters = []
-    transactions = get_transactions_by_tag(tag="MALCONPEERTS")
+    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         if peer['core_id'] != origin:
             voters.append(peer['core_id'])
-    return voters
+    return list(set(voters))
 
 def claim_executor(election_id: str, eround: int, votes: list):
-    EXECUTORTAG = "MALCONEXECTS"
     executor = Executor()
     executor.election_id = election_id
     executor.eround = eround
     executor.votes = votes
     executor.address = MYADDRESS
     address, message = build_transaction(payload=executor.get())
-    return send_transaction(address=address, message=message, tag=EXECUTORTAG)
+    return send_transaction(address=address, message=message, tag=get_tag("EXEC"))
 
 def generate_token():
     timestamp = datetime.datetime.now() + datetime.timedelta(seconds=500)
@@ -155,7 +154,7 @@ def generate_token():
     return token, signature
 
 def get_votes(election_id: str, address: str):
-    transactions = get_transactions_by_tag(tag="MALCONVOTETS")
+    transactions = get_transactions_by_tag(tag=get_tag("VOTE"))
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)
@@ -164,7 +163,7 @@ def get_votes(election_id: str, address: str):
     return leaderboard[address]
 
 def get_election_winner(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONVOTETS")
+    transactions = get_transactions_by_tag(tag=get_tag("VOTE"))
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)
@@ -186,7 +185,7 @@ def verify_executor(election_id: str, executor_address: str):
     return False
 
 def send_token(executor_address: str, election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONPEERTS")
+    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     token, signature = generate_token()
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
@@ -201,7 +200,7 @@ def send_token(executor_address: str, election_id: str):
             return response
 
 def isElecInitiated(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONREQTS")
+    transactions = get_transactions_by_tag(tag=get_tag("REQ"))
     for tx_hash in transactions:
         request = read_transaction(tx_hash=tx_hash)
         if request['election_id'] == election_id:
@@ -209,7 +208,7 @@ def isElecInitiated(election_id: str):
     return False
 
 def isElecFinal(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONVOTETS")
+    transactions = get_transactions_by_tag(tag=get_tag("VOTE"))
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)

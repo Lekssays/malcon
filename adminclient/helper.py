@@ -13,6 +13,9 @@ env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
+def get_tag(resource: str):
+    return "MALCON" + resource.upper() + env("VERSION")
+
 def get_transactions_by_tag(tag: str):
     http = urllib3.PoolManager()
     command = json.dumps({"command": "findTransactions", "tags": [tag]})
@@ -33,7 +36,7 @@ def read_transaction( tx_hash: str):
 
 def get_peers():
     peers = []
-    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         peers.append(peer)
@@ -56,12 +59,12 @@ def prepare_payload(election_id: str):
     return json.dumps(payload)
 
 def get_target_peer(election_id: str):
-    transactions = get_transactions_by_tag(tag="MALCONELEC")
+    transactions = get_transactions_by_tag(tag=get_tag("ELEC"))
     for tx_hash in transactions:
         election = read_transaction(tx_hash=tx_hash)
         if election_id == election['election_id']:
             target_peer_id = election['target']
-            peers = get_transactions_by_tag('MALCONTARPEER')
+            peers = get_transactions_by_tag(get_tag("TARPEER"))
             for peer in peers:
                 if peer['core_id'] == target_peer_id:
                     return peer

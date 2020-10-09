@@ -23,6 +23,9 @@ env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
+def get_tag(resource: str):
+    return "MALCON" + resource.upper() + env("VERSION")
+
 def generate_address():
     seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
     filename = "seed.txt"
@@ -83,6 +86,22 @@ def read_transaction( tx_hash: str):
     message = message.decode().replace("\'", "\"")
     return json.loads(message)
 
+def get_latest_peer(entries: list): 
+	entries.sort(key = lambda x: x[0], reverse=True) 
+	return entries[0] 
+
+def get_peer_publickey(issuer: str):
+    peers = []
+    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
+    for tx_hash in transactions:
+        peer = read_transaction(tx_hash=tx_hash)
+        if peer['core_id'] == issuer:
+            peers.append((peer['timestamp'], tx_hash))
+    
+    latest_entry = get_latest_peer(entries=peers)
+    publickey = read_transaction(tx_hash=latest_entry[1])
+    return publickey
+
 def verify_token(token: str, signature: float, issuer: str):
     # Check if the token is already used
     if r.sismember("tokens", token):
@@ -98,11 +117,12 @@ def verify_token(token: str, signature: float, issuer: str):
         return False
     
     # Check if the signature is correct
-    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         if peer['core_id'] == issuer:
-            pubkey = RSA.importKey(peer['public_key'].encode())
+            publickey = get_peer_publickey(issuer=peer['core_id'])
+            pubkey = RSA.importKey(publickey.encode())
             thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
             hashFromSignature = pow(signature, pubkey.e, pubkey.n)
             return thash == hashFromSignature
@@ -110,7 +130,7 @@ def verify_token(token: str, signature: float, issuer: str):
 
 def get_peers():
     peers = []
-    transactions = get_transactions_by_tag(tag="MALCONPEER")
+    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         peers.append(peer)
@@ -132,30 +152,28 @@ def validate_tokens(tokens: list):
 
 def get_strategy(election_id: str):
     # TODO: this can be also done with Fabric
-    transactions = get_transactions_by_tag(tag="MALCONELEC")
+    transactions = get_transactions_by_tag(tag=get_tag("ELEC"))
     for election in transactions:
         if election['election_id'] == election_id:
             return election['strategy_id']
 
 def execute_stategy(strategy_id: str):
     # TODO: wait for confirmation of the majority
-    transactions = get_transactions_by_tag(tag="MALCONSTRAT")
+    transactions = get_transactions_by_tag(tag=get_tag("STRAT"))
     for strategy in transactions:
         if strategy['strategy_id'] == strategy_id:
             command = subprocess.check_output(strategy, shell=True)
             return command.decode()
 
 def broadcast_execution(strategy_id: str, issuer: str):
-    EXECUTIONTAG= "MALCONEXECUTION"
     execution = {
         'strategy_id': strategy_id,
         'issuer': issuer
     }
     address, message = build_transaction(payload=json.dumps(execution))
-    return send_transaction(address=address, message=message, tag=EXECUTIONTAG)
+    return send_transaction(address=address, message=message, tag=get_tag("EXECUTION"))
 
 def register_target_peer():
-    TARGETPEERTAG = "MALCONTARPEER"
     target_peer = {
         'endpoint': env("CORE_PEER_ENDPOINT"),
         'address': get_address(),
@@ -163,7 +181,7 @@ def register_target_peer():
     }
     address, message = build_transaction(payload=json.dumps(target_peer))
     r.sadd("registred", "yes")
-    return send_transaction(address=address, message=message, tag=TARGETPEERTAG)
+    return send_transaction(address=address, message=message, tag=get_tag("TARPEER"))
 
 def isRegistred():
     return len(r.smembers("registred")) == 1

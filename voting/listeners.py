@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import datetime
+import math
 import time
 import random
 import urllib3
@@ -9,12 +11,17 @@ from environs import Env
 env = Env()
 env.read_env()
 
+def get_tag(resource: str):
+    return "MALCON" + resource.upper() + env("VERSION")
+
 def elections():
     print("Listening on MALCONELEC tag...")
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONELECTS")
+        transactions = utils.get_transactions_by_tag(tag=get_tag("ELEC"))
         for tx_hash in transactions:
-            if utils.ismember(label="processed", txhash=tx_hash):
+            election = utils.read_transaction(tx_hash=tx_hash)
+            cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+            if utils.ismember(label="processed", txhash=tx_hash) or cur_timestamp - int(election['timestamp']) >= 300:
                 continue
             else:
                 print("MALCONELEC: storing tx {} locally...".format(tx_hash))
@@ -29,9 +36,11 @@ def elections():
 def requests():
     print("Listening on MALCONREQ tag...")
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONREQTS")
+        transactions = utils.get_transactions_by_tag(tag=get_tag("REQ"))
         for tx_hash in transactions:
-            if utils.ismember(label="requests", txhash=tx_hash):
+            request = utils.read_transaction(tx_hash=tx_hash)
+            cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+            if utils.ismember(label="requests", txhash=tx_hash) or cur_timestamp - int(request['timestamp']) >= 300:
                 continue
             else:
                 print("MALCONREQ: Storing tx {} locally...".format(tx_hash))
@@ -49,9 +58,11 @@ def votes():
     print("Listening on MALCONVOTE tag...")
     eround = 1
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONVOTETS")
+        transactions = utils.get_transactions_by_tag(tag=get_tag("VOTE"))
         for tx_hash in transactions:
-            if utils.ismember(label="votes", txhash=tx_hash):
+            vote = utils.read_transaction(tx_hash=tx_hash)
+            cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+            if utils.ismember(label="votes", txhash=tx_hash) or cur_timestamp - int(vote['timestamp']) >= 300:
                 continue
             else:
                 print("MALCONVOTE: Storing tx {} locally...".format(tx_hash))
@@ -76,9 +87,11 @@ def votes():
 def executors():
     print("Listening on MALCONEXEC tag...")
     while True:
-        transactions = utils.get_transactions_by_tag(tag="MALCONEXECTS")
+        transactions = utils.get_transactions_by_tag(tag=get_tag("EXEC"))
         for tx_hash in transactions:
-            if utils.ismember(label="executors", txhash=tx_hash):
+            executor = utils.read_transaction(tx_hash=tx_hash)
+            cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+            if utils.ismember(label="executors", txhash=tx_hash) or cur_timestamp - int(executor['timestamp']):
                 continue
             else:
                 print("MALCONEXEC: Storing tx {} locally...".format(tx_hash))
