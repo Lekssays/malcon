@@ -129,12 +129,12 @@ def get_voting_peers(origin: str):
             voters.append(peer['core_id'])
     return list(set(voters))
 
-def claim_executor(election_id: str, eround: int, votes: list):
+def claim_executor(election_id: str, eround: int, votes: list, core_id: str):
     executor = Executor()
     executor.election_id = election_id
     executor.eround = eround
     executor.votes = votes
-    executor.address = MYADDRESS
+    executor.core_id = core_id
     address, message = build_transaction(payload=executor.get())
     return send_transaction(address=address, message=message, tag=get_tag("EXEC"))
 
@@ -178,18 +178,18 @@ def get_election_winner(election_id: str):
             winner = candidate
     return winner
 
-def verify_executor(election_id: str, executor_address: str):
+def verify_executor(election_id: str, executor: str):
     winner = get_election_winner(election_id=election_id)
-    if winner == executor_address:
+    if winner == executor:
         return True
     return False
 
-def send_token(executor_address: str, election_id: str):
+def send_token(executor: str, election_id: str):
     transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     token, signature = generate_token()
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
-        if peer['address'] == executor_address:
+        if peer['core_id'] == executor:
             http = urllib3.PoolManager()
             payload = json.dumps({"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": election_id})
             response = http.request(

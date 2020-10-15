@@ -27,6 +27,9 @@ def elections():
                 print("MALCONELEC: storing tx {} locally...".format(tx_hash))
                 utils.store_hash(label="processed", txhash=tx_hash)
                 tx = utils.read_transaction(tx_hash=tx_hash)
+
+                # TODO: use semaphores to avoid concurrency problems :).. Waiting time is just a temporary solution
+                time.sleep(random.randint(1, 10))
                 if not utils.isElecInitiated(election_id=tx['election_id']):
                     print("MALCONELEC: Sending election requests with id {}".format(tx['election_id']))
                     utils.send_request(tx_id=tx_hash, issuer=utils.MYADDRESS, election_id=tx['election_id'])
@@ -50,7 +53,7 @@ def requests():
                 candidates = utils.get_voting_peers(origin=env("CORE_PEER_ID"))
                 candidate = candidates[random.randint(0, len(candidates) - 1)]
                 utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=1)
-                print('MALCONREQ: Peer {} voted successfully on candidate {} in election {}'.format(env("CORE_PEER_ID"), candidate, tx['election_id']))
+                print('MALCONREQ: Peer {} voted successfully on candidate {} in election {} round 1'.format(env("CORE_PEER_ID"), candidate, tx['election_id']))
         print("MALCONREQ: Sleeping for 5 seconds...")
         time.sleep(5)    
 
@@ -73,13 +76,15 @@ def votes():
                 if not isFinal:
                     candidates = list(set(utils.get_voting_peers(origin=env("CORE_PEER_ID"))) & set(winners))
                     candidate = candidates[random.randint(0, len(candidates) - 1)]
-                    utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=eround+1)                     
+                    eround += 1
+                    print('MALCONVOTE: Peer {} voted successfully on candidate {} in election {} round {}'.format(env("CORE_PEER_ID"), candidate, tx['election_id'], str(eround)))
+                    utils.send_vote(candidate=candidate, election_id=tx['election_id'], eround=eround)                     
                 else:
                     winner = utils.get_election_winner(election_id=tx['election_id'])
                     if winner == env("CORE_PEER_ID"):
                         votes = utils.get_votes(election_id=tx['election_id'], address=env("CORE_PEER_ID"))
                         print("MALCONVOTE: Peer {} claiming executor after winner election {}".format(env("CORE_PEER_ID"), tx['election_id']))
-                        utils.claim_executor(election_id=tx['election_id'], eround=eround, votes=votes)
+                        utils.claim_executor(election_id=tx['election_id'], eround=eround, votes=votes, core_id=env("CORE_PEER_ID"))
                     eround = 1
         print("MALCONVOTE: Sleeping for 5 seconds...")
         time.sleep(5)
@@ -91,14 +96,14 @@ def executors():
         for tx_hash in transactions:
             executor = utils.read_transaction(tx_hash=tx_hash)
             cur_timestamp = math.floor(datetime.datetime.now().timestamp())
-            if utils.ismember(label="executors", txhash=tx_hash) or cur_timestamp - int(executor['timestamp']):
+            if utils.ismember(label="executors", txhash=tx_hash) or cur_timestamp - int(executor['timestamp']) >= 300:
                 continue
             else:
                 print("MALCONEXEC: Storing tx {} locally...".format(tx_hash))
                 utils.store_hash(label="executors", txhash=tx_hash)
                 executor = utils.read_transaction(tx_hash=tx_hash)
-                if utils.verify_executor(election_id=executor['election_id'], executor_address=executor['address']):
+                if utils.verify_executor(election_id=executor['election_id'], executor=executor['core_id']):
                     print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['address']))
-                    utils.send_token(executor_address=executor['address'], election_id=executor['election_id'])
+                    utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
         print("MALCONEXEC: Sleeping for 5 seconds...")
         time.sleep(5)
