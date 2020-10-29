@@ -199,12 +199,11 @@ def send_token(executor: str, election_id: str):
             )
             return response
 
-def isElecInitiated(election_id: str):
-    transactions = get_transactions_by_tag(tag=get_tag("REQ"))
-    for tx_hash in transactions:
-        request = read_transaction(tx_hash=tx_hash)
-        if request['election_id'] == election_id:
-            return True
+
+def initiateElec(election_id: str):
+    if not r.exists(election_id + "_init"):
+        r.sadd(election_id + "_init", 1)
+        return True
     return False
 
 def isElecFinal(election_id: str):
@@ -224,3 +223,26 @@ def isElecFinal(election_id: str):
     if len(winners) > 1:
         return False, winners
     return True, winners
+
+
+def get_peer_id(peer: str):
+    _id = ''
+    for c in peer:
+        if c.isdigit():
+            _id += c
+    return _id[::-1]
+
+def broadcast_request(election_id: str):
+    # TODO: In Prod, PORT 5000 shall be changed to the appropriate port of devices
+    peers = get_voting_peers(origin=env("CORE_PEER_ID"))
+    count = 0
+    for peer in peers:
+        port = "110" + get_peer_id(peer=peer)
+        rr = redis.Redis(host=peer, port=port)
+        if not rr.exists(election_id + "_init"):
+            rr.sadd(election_id + "_init", 1)
+            count += 1
+    if count == len(peers):
+        return True
+    return False
+        

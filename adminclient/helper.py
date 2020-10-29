@@ -85,3 +85,9 @@ def execute_strategy(endpoint: str, election_id: str):
         body=payload
     )
     return json.loads(response.data.decode('utf-8'))
+
+def store_election_initiation(election_id: str):
+    if not r.exists(election_id + "_init"):
+        r.sadd(election_id + "_init", 1)
+    return r.exists(election_id + "_init")
+ 

@@ -27,12 +27,14 @@ def elections():
                 print("MALCONELEC: storing tx {} locally...".format(tx_hash))
                 utils.store_hash(label="processed", txhash=tx_hash)
                 tx = utils.read_transaction(tx_hash=tx_hash)
-
-                # TODO: use semaphores to avoid concurrency problems :).. Waiting time is just a temporary solution
-                time.sleep(random.randint(1, 10))
-                if not utils.isElecInitiated(election_id=tx['election_id']):
-                    print("MALCONELEC: Sending election requests with id {}".format(tx['election_id']))
-                    utils.send_request(tx_id=tx_hash, issuer=utils.MYADDRESS, election_id=tx['election_id'])
+                print("MALCONELEC: Broadcasting election request with id {} resigration..".format(tx['election_id']))
+                response = utils.broadcast_request(election_id=tx['election_id'])
+                if response:
+                    print("MALCONELEC: Registering election request with id {} LOCALLY".format(tx['election_id']))
+                    isInitiated = utils.initiateElec(election_id=tx['election_id'])
+                    if isInitiated:
+                        print("MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(tx['election_id']))
+                        utils.send_request(tx_id=tx_hash, issuer=utils.MYADDRESS, election_id=tx['election_id'])
         print("MALCONELEC: Sleeping for 5 seconds...")
         time.sleep(5)
 
@@ -83,7 +85,7 @@ def votes():
                     winner = utils.get_election_winner(election_id=tx['election_id'])
                     if winner == env("CORE_PEER_ID"):
                         votes = utils.get_votes(election_id=tx['election_id'], address=env("CORE_PEER_ID"))
-                        print("MALCONVOTE: Peer {} claiming executor after winner election {}".format(env("CORE_PEER_ID"), tx['election_id']))
+                        print("MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), tx['election_id']))
                         utils.claim_executor(election_id=tx['election_id'], eround=eround, votes=votes, core_id=env("CORE_PEER_ID"))
                     eround = 1
         print("MALCONVOTE: Sleeping for 5 seconds...")
