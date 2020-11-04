@@ -120,14 +120,17 @@ def store_hash(label: str, txhash: str):
 def ismember(label: str, txhash: str):
     return r.sismember(label, txhash)
 
-def get_voting_peers(origin: str):
+def store_voting_peers(origin: str):
     voters = []
     transactions = get_transactions_by_tag(tag=get_tag("PEER"))
     for tx_hash in transactions:
         peer = read_transaction(tx_hash=tx_hash)
         if peer['core_id'] != origin:
             voters.append(peer['core_id'])
-    return list(set(voters))
+    r.sadd('voting_peers', *set(voters))
+
+def get_voting_peers():
+    return list(r.smembers('voting_peers'))
 
 def claim_executor(election_id: str, eround: int, votes: list, core_id: str):
     executor = Executor()
@@ -146,7 +149,7 @@ def generate_token():
     token = token.split(".")
     token = token[0]
 
-    with open("private_key.pem", "rb") as k:
+    with open(env("CORE_PEER_ID") + "_private_key.pem", "rb") as k:
         privatekey = RSA.importKey(k.read())
     
     thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
@@ -163,7 +166,7 @@ def get_votes(election_id: str, address: str):
     return leaderboard[address]
 
 def get_election_winner(election_id: str):
-    transactions = get_transactions_by_tag(tag=get_tag("VOTE"))
+    transactions = get_members_by_label(label="votes")
     leaderboard = defaultdict(lambda : 0)
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)
@@ -206,12 +209,22 @@ def initiateElec(election_id: str):
         return True
     return False
 
+def update(tag: str, label: str):
+    remote = get_transactions_by_tag(tag=tag)
+    for tx in remote:
+        store_hash(label=label, txhash=tx)
+
+def get_current_votes(election_id: str):
+    return len(list(get_members_by_label(label="votes")))
+
 def isElecFinal(election_id: str):
-    transactions = get_transactions_by_tag(tag=get_tag("VOTE"))
+    transactions = get_members_by_label(label="votes")
     leaderboard = defaultdict(lambda : 0)
+    votes = 0
     for tx_hash in transactions:
         vote = read_transaction(tx_hash=tx_hash)
         if election_id == vote['election_id']:
+            votes += 1
             leaderboard[vote['candidate']] += 1
     
     max_votes = -1
@@ -220,13 +233,11 @@ def isElecFinal(election_id: str):
         if leaderboard[candidate] >= max_votes:
             max_votes = leaderboard[candidate]
             winners.append(candidate)
-    if len(winners) > 1:
-        return False, winners
-    return True, winners
 
+    return  winners
 
 def get_peer_id(peer: str):
-    _id = ''
+    _id = ""
     for c in peer:
         if c.isdigit():
             _id += c
@@ -234,15 +245,22 @@ def get_peer_id(peer: str):
 
 def broadcast_request(election_id: str):
     # TODO: In Prod, PORT 5000 shall be changed to the appropriate port of devices
-    peers = get_voting_peers(origin=env("CORE_PEER_ID"))
+    peers = get_voting_peers()
     count = 0
     for peer in peers:
-        port = "110" + get_peer_id(peer=peer)
-        rr = redis.Redis(host=peer, port=port)
+        port = "110" + get_peer_id(peer=peer.decode())
+        rr = redis.Redis(host=peer.decode(), port=port)
         if not rr.exists(election_id + "_init"):
             rr.sadd(election_id + "_init", 1)
             count += 1
     if count == len(peers):
         return True
     return False
-        
+
+def get_members_by_label(label: str):
+    return map(lambda x: x.decode(), r.smembers(label))
+
+
+def synchronize(label: str, transactions: list):
+    for tx_hash in transactions:
+        store_hash(label=label, txhash=tx_hash)

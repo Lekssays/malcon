@@ -27,6 +27,9 @@ def main():
         r.sadd("registred", "yes")
         print("Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx))
 
+    if not r.exists('voting_peers'):
+        utils.store_voting_peers(origin=env("CORE_PEER_ID"))
+
     # Start all listeners
     elec_thread = threading.Thread(target=listeners.elections)
     reqs_thread = threading.Thread(target=listeners.requests)
