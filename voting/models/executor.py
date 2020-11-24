@@ -4,7 +4,7 @@ import math
 import json
 
 class Executor:
-    def __init__(self, core_id = "", election_id = "", eround = 0, votes = [], timestamp = str(math.floor(datetime.datetime.now().timestamp()))):
+    def __init__(self, core_id = "", election_id = "", eround = 0, votes = 0, timestamp = str(math.floor(datetime.datetime.now().timestamp()))):
         self.election_id = election_id
         self.timestamp = timestamp
         self.eround = eround

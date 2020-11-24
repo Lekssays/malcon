@@ -99,7 +99,7 @@ func CreateElection(electionID string, actionID string, timestamp string, target
 
 	const depth = 3
 	const minimumWeightMagnitude = 9
-	const tag = "MALCONELECVO"
+	const tag = "MALCONELECVT"
 	// Just a dummy address and a seed that is not used since the transaction is has zero value (expected by iota)
 	const address = trinary.Trytes("ZLGVEQ9JUZZWCZXLWVNTHBDX9G9KZTJP9VEERIIFHY9SIQKYBVAHIMLHXPQVE9IXFDDXNHQINXJDRPFDXNYVAPLZAW")
 	const seed = trinary.Trytes("JBN9ZRCOH9YRUGSWIQNZWAIFEZUBDUGTFPVRKXWPAUCEQQFS9NHPQLXCKZKRHVCCUZNF9CZZWKXRZVCWQ")

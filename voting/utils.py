@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import datetime
 import json
+import math
 import os.path
 import random
 import redis
@@ -40,32 +41,38 @@ def generate_address():
     security_level = 2
     address = api.get_new_addresses(index=0, count=1, security_level = security_level)['addresses'][0]
     os.environ['IOTA_ADDRESS'] = str(address)
-    filename = "address.txt"
+    filename = env("CORE_PEER_ID") + "_address.txt"
     out = open(filename, "w")
     out.write(str(address))
     out.close()
     return str(address)
 
 def get_address():
-    if os.path.isfile("address.txt"):
-        with open("address.txt") as f:
+    if os.path.isfile(env("CORE_PEER_ID") + "_address.txt"):
+        with open(env("CORE_PEER_ID") + "_address.txt") as f:
             return f.readline()
     else:
         return generate_address()
 
 MYADDRESS = get_address()
 
-def get_transactions_by_tag(tag: str):
-    http = urllib3.PoolManager()
-    command = json.dumps({"command": "findTransactions", "tags": [tag]})
+def get_transactions_hashes_by_tag(tag: str):
+    results = API.find_transactions(tags=[tag])
+    hashes = map(lambda x: str(x), results['hashes'])
+    return hashes
 
-    response = http.request(
-        'POST', ENDPOINT,
-        headers={'Content-Type': 'application/json', 'X-IOTA-API-Version': '1'},
-        body=command
-    )
-    results = json.loads(response.data.decode('utf-8'))
-    return results['hashes']
+def get_transactions_by_tag(tag: str, hashes: list, returnAll: bool):
+    results = API.find_transaction_objects(tags=[tag])
+    if returnAll:
+        return results['transactions']
+    else:
+        transactions = []
+        for tx in results['transactions']:
+            for tx_hash in hashes:
+                cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+                if tx_hash == str(tx.hash) and cur_timestamp - int(tx.timestamp) < 300:
+                    transactions.append(tx)    
+        return transactions
 
 def send_transaction(address: str, message: TryteString, tag: str) -> str:
     tx = ProposedTransaction(
@@ -98,7 +105,7 @@ def send_request(tx_id: str, issuer: str, election_id: str):
 
 def send_vote(election_id: str, candidate: str, eround: int):
     vote = Vote()
-    vote.voter = MYADDRESS
+    vote.voter = env("CORE_PEER_ID")
     vote.election_id = election_id
     vote.candidate = candidate
     vote.eround = eround
@@ -115,24 +122,27 @@ def register_peer(endpoint: str, public_key: str, core_id: str, address: str):
     return send_transaction(address=address, message=message, tag=get_tag("PEER"))
 
 def store_hash(label: str, txhash: str):
-    r.sadd(label, txhash)
+    r.sadd(label + "_hashes", str(txhash))
 
 def ismember(label: str, txhash: str):
     return r.sismember(label, txhash)
 
 def store_voting_peers(origin: str):
-    voters = []
-    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
-    for tx_hash in transactions:
-        peer = read_transaction(tx_hash=tx_hash)
+    peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
+    for peer in peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         if peer['core_id'] != origin:
-            voters.append(peer['core_id'])
-    r.sadd('voting_peers', *set(voters))
+            r.sadd('voting_peers', str(peer))
 
 def get_voting_peers():
-    return list(r.smembers('voting_peers'))
+    voters = list(r.smembers('voting_peers'))
+    core_ids = set()
+    for voter in voters:
+        voter = json.loads(voter.decode().replace("\'", "\""))
+        core_ids.add(voter['core_id'])
+    return list(core_ids)
 
-def claim_executor(election_id: str, eround: int, votes: list, core_id: str):
+def claim_executor(election_id: str, eround: int, votes: int, core_id: str):
     executor = Executor()
     executor.election_id = election_id
     executor.eround = eround
@@ -156,52 +166,46 @@ def generate_token():
     signature = pow(thash, privatekey.d, privatekey.n)
     return token, signature
 
-def get_votes(election_id: str, address: str):
-    transactions = get_transactions_by_tag(tag=get_tag("VOTE"))
+def get_votes(election_id: str, address: str, eround: int):
+    votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
-    for tx_hash in transactions:
-        vote = read_transaction(tx_hash=tx_hash)
-        if election_id == vote['election_id']:
+    for vote in votes:
+        vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
+        if election_id == vote['election_id'] and eround == int(vote['round']):
             leaderboard[vote['candidate']] += 1
     return leaderboard[address]
 
-def get_election_winner(election_id: str):
-    transactions = get_members_by_label(label="votes")
+def verify_executor(election_id: str, executor: str, eround: int, votes_count: int):
+    votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
-    for tx_hash in transactions:
-        vote = read_transaction(tx_hash=tx_hash)
-        if election_id == vote['election_id']:
-            leaderboard[vote['candidate']] += 1
     
-    max_votes = -1
-    winner = ""
-    for candidate in leaderboard:
-        if leaderboard[candidate] >= max_votes:
-            max_votes = leaderboard[candidate]
-            winner = candidate
-    return winner
+    for vote in votes:
+        vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
+        if election_id == vote['election_id'] and eround == int(vote['round']):
+            leaderboard[vote['candidate']] += 1
 
-def verify_executor(election_id: str, executor: str):
-    winner = get_election_winner(election_id=election_id)
-    if winner == executor:
+    winner = max(leaderboard.items(), key=lambda a: a[1])
+    print("VERIFY_EXECUTOR ==>", winner[0], winner[1])
+    print("VERIFY_EXECUTOR ==>", executor, votes_count)
+    if executor == winner[0] and votes_count == winner[1]:
         return True
     return False
 
 def send_token(executor: str, election_id: str):
-    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
+    # TODO: get the latest entries of each peer
+    peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     token, signature = generate_token()
-    for tx_hash in transactions:
-        peer = read_transaction(tx_hash=tx_hash)
+    for peer in peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         if peer['core_id'] == executor:
             http = urllib3.PoolManager()
             payload = json.dumps({"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": election_id})
             response = http.request(
-                'POST', peer['endpoint'],
+                'POST', peer['endpoint'] + "/tokens",
                 headers={'Content-Type': 'application/json'},
                 body=payload
             )
             return response
-
 
 def initiateElec(election_id: str):
     if not r.exists(election_id + "_init"):
@@ -209,32 +213,30 @@ def initiateElec(election_id: str):
         return True
     return False
 
-def update(tag: str, label: str):
-    remote = get_transactions_by_tag(tag=tag)
-    for tx in remote:
-        store_hash(label=label, txhash=tx)
-
 def get_current_votes(election_id: str):
     return len(list(get_members_by_label(label="votes")))
 
-def isElecFinal(election_id: str):
-    transactions = get_members_by_label(label="votes")
+def isElecFinal(election_id: str, eround: int):
+    votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
-    votes = 0
-    for tx_hash in transactions:
-        vote = read_transaction(tx_hash=tx_hash)
-        if election_id == vote['election_id']:
-            votes += 1
+    for vote in votes:
+        vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
+        if election_id == vote['election_id'] and eround == int(vote['round']):
             leaderboard[vote['candidate']] += 1
     
-    max_votes = -1
+    max_votes = max(leaderboard.values())
+    total_votes = 0
     winners = []
-    for candidate in leaderboard:
-        if leaderboard[candidate] >= max_votes:
-            max_votes = leaderboard[candidate]
-            winners.append(candidate)
 
-    return  winners
+    print("DEEBUG: MAX_VOTES = ", max_votes)
+    print("DEEBUG: ROUND = ", eround)
+    for candidate in leaderboard:
+        total_votes += leaderboard[candidate]
+        print("DEBUUUG!!! ", candidate, leaderboard[candidate])
+        if leaderboard[candidate] == max_votes:
+            winners.append(candidate)
+    print("winners => ", winners, total_votes)
+    return winners, total_votes
 
 def get_peer_id(peer: str):
     _id = ""
@@ -248,8 +250,8 @@ def broadcast_request(election_id: str):
     peers = get_voting_peers()
     count = 0
     for peer in peers:
-        port = "110" + get_peer_id(peer=peer.decode())
-        rr = redis.Redis(host=peer.decode(), port=port)
+        port = "110" + get_peer_id(peer=peer)
+        rr = redis.Redis(host=peer, port=port)
         if not rr.exists(election_id + "_init"):
             rr.sadd(election_id + "_init", 1)
             count += 1
@@ -258,9 +260,11 @@ def broadcast_request(election_id: str):
     return False
 
 def get_members_by_label(label: str):
-    return map(lambda x: x.decode(), r.smembers(label))
+    return map(lambda x: x.decode().replace("\'", "\""), r.smembers(label))
 
+def get_members_hashes_by_label(label: str):
+    return map(lambda x: x.decode(), r.smembers(label + "_hashes"))
 
-def synchronize(label: str, transactions: list):
-    for tx_hash in transactions:
+def synchronize_hashes(label: str, hashes: list):
+    for tx_hash in hashes:
         store_hash(label=label, txhash=tx_hash)

@@ -1,5 +1,5 @@
 redis
 urllib3
-pyota
+pyota[ccurl,pow]
 flask
 environs

@@ -102,7 +102,6 @@ services:
     - CORE_PEER_ENDPOINT=peer0.org1.example.com:10010
     - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11010
-    - VERSION=VO
     ports:
     - 7051:7051
     - 7053:9443
@@ -133,7 +132,6 @@ services:
     - CORE_PEER_ENDPOINT=peer1.org1.example.com:10011
     - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11011
-    - VERSION=VO
     ports:
     - 7091:7051
     - 7443:9443
@@ -163,7 +161,6 @@ services:
     - CORE_PEER_ENDPOINT=peer0.org2.example.com:10020
     - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11020
-    - VERSION=VO
     ports:
     - 8051:7051
     - 8053:9443
@@ -193,7 +190,6 @@ services:
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org2.example.com:9443
     - CORE_PEER_ENDPOINT=peer1.org2.example.com:10021
     - CORE_PEER_REDIS_PORT=11021
-    - VERSION=VO
     ports:
     - 8091:7051
     - 8443:9443
@@ -223,7 +219,6 @@ services:
     - CORE_PEER_ENDPOINT=peer0.org3.example.com:10030
     - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11030
-    - VERSION=VO
     ports:
     - 9051:7051
     - 9053:9443
@@ -254,7 +249,6 @@ services:
     - CORE_PEER_ENDPOINT=peer1.org3.example.com:10031
     - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11031
-    - VERSION=VO
     ports:
     - 9091:7051
     - 9443:9443

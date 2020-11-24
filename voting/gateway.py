@@ -24,7 +24,7 @@ def main():
             pubkey = f.read()
         iota_addr = utils.MYADDRESS
         register_peer_tx = utils.register_peer(endpoint=endpoint, public_key=pubkey, core_id=core_id, address=iota_addr)
-        r.sadd("registred", "yes")
+        r.sadd(env("CORE_PEER_ID"), str(register_peer_tx))
         print("Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx))
 
     if not r.exists('voting_peers'):
