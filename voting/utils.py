@@ -127,12 +127,24 @@ def store_hash(label: str, txhash: str):
 def ismember(label: str, txhash: str):
     return r.sismember(label, txhash)
 
+def get_peer_endpoint(peer: str):
+    if env("CORE_PEER_PORT"):
+        return "http://" + peer + ":" + env("CORE_PEER_PORT")
+    endpoints = list(r.smembers("endpoints"))
+    for endpoint in endpoints:
+        endpoint = endpoint.decode()
+        core_id = endpoint.split(":")
+        core_id = core_id[0]
+        if core_id == peer:
+            return "http://" + endpoint
+
 def store_voting_peers(origin: str):
     peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     for peer in peers:
         peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         if peer['core_id'] != origin:
             r.sadd('voting_peers', str(peer))
+            r.sadd('endpoints', str(peer['endpoint']))
 
 def get_voting_peers():
     voters = list(r.smembers('voting_peers'))
@@ -185,27 +197,30 @@ def verify_executor(election_id: str, executor: str, eround: int, votes_count: i
             leaderboard[vote['candidate']] += 1
 
     winner = max(leaderboard.items(), key=lambda a: a[1])
-    print("VERIFY_EXECUTOR ==>", winner[0], winner[1])
-    print("VERIFY_EXECUTOR ==>", executor, votes_count)
     if executor == winner[0] and votes_count == winner[1]:
         return True
     return False
 
+def get_peer_tx_hash():
+    tx_hash = list(r.smembers(env("CORE_PEER_ID")))
+    return tx_hash[0]
+
+def get_peer_public_key(tx_hash: str):
+    peer = read_transaction(tx_hash=tx_hash)
+    return peer['public_key']
+
 def send_token(executor: str, election_id: str):
-    # TODO: get the latest entries of each peer
-    peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
+    peer_public_key = get_peer_public_key(tx_hash=get_peer_tx_hash())
     token, signature = generate_token()
-    for peer in peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        if peer['core_id'] == executor:
-            http = urllib3.PoolManager()
-            payload = json.dumps({"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": election_id})
-            response = http.request(
-                'POST', peer['endpoint'] + "/tokens",
-                headers={'Content-Type': 'application/json'},
-                body=payload
-            )
-            return response
+    endpoint = get_peer_endpoint(peer=executor)
+    http = urllib3.PoolManager()
+    payload = json.dumps({"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": election_id, "public_key": peer_public_key})
+    response = http.request(
+        'POST', endpoint + "/tokens",
+        headers={'Content-Type': 'application/json'},
+        body=payload
+    )
+    return response
 
 def initiateElec(election_id: str):
     if not r.exists(election_id + "_init"):
@@ -215,6 +230,12 @@ def initiateElec(election_id: str):
 
 def get_current_votes(election_id: str):
     return len(list(get_members_by_label(label="votes")))
+
+def is_round_finalized(election_id: str, eround: int):
+    rounds = list(r.smembers(election_id))
+    if eround in rounds:
+        return True
+    return False
 
 def isElecFinal(election_id: str, eround: int):
     votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
@@ -228,15 +249,17 @@ def isElecFinal(election_id: str, eround: int):
     total_votes = 0
     winners = []
 
-    print("DEEBUG: MAX_VOTES = ", max_votes)
-    print("DEEBUG: ROUND = ", eround)
     for candidate in leaderboard:
         total_votes += leaderboard[candidate]
-        print("DEBUUUG!!! ", candidate, leaderboard[candidate])
         if leaderboard[candidate] == max_votes:
-            winners.append(candidate)
-    print("winners => ", winners, total_votes)
-    return winners, total_votes
+            winners.append((candidate, max_votes))
+    print("ISELECFINAL: MAX_VOTES = ", max_votes)
+    print("ISELECFINAL: ROUND = ", eround)
+    print("ISELECFINAL: WINNERS = ", winners, total_votes)
+    if len(winners) == 1:
+        if winners[0][1] > (len(get_voting_peers()) + 1) / 2:
+            r.sadd(election_id, eround)
+    return winners
 
 def get_peer_id(peer: str):
     _id = ""

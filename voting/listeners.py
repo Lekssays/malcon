@@ -7,6 +7,7 @@ import random
 import urllib3
 import utils
 
+from collections import defaultdict
 from environs import Env
 
 env = Env()
@@ -51,35 +52,32 @@ def requests():
 
 def votes():
     print("Listening on MALCONVOTE tag...")
-    eround = 1
-    executed_elections = set()
-    finalized_elections = set()
+    elections_rounds = defaultdict(lambda : 1)
+    finalized_elections = defaultdict(lambda : False)
     while True:
         hashes = list(set(utils.get_transactions_hashes_by_tag(tag=get_tag("VOTE"))) ^ set(utils.get_members_hashes_by_label(label="votes")))
-        if len(hashes) % (len(utils.get_voting_peers()) + 1) == 0 and len(hashes) > 0:
+        if len(hashes) > (len(utils.get_voting_peers()) + 1) / 2 and len(hashes) > 0:
             utils.synchronize_hashes(hashes=hashes, label="votes")
             votes = utils.get_transactions_by_tag(tag=get_tag("VOTE"), hashes=hashes, returnAll=False)
             for vote in votes:
                 vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-                if vote['election_id'] not in executed_elections or vote['election_id'] not in finalized_elections:
-                    winners, total_votes = utils.isElecFinal(election_id=vote['election_id'], eround=int(vote['round']))
+                if not finalized_elections[vote['election_id']]:
+                    winners = utils.isElecFinal(election_id=vote['election_id'], eround=int(vote['round']))
                     if len(winners) == 1:
-                        finalized_elections.add(vote['election_id'])
-                        if winners[0] == env("CORE_PEER_ID") and total_votes % (len(utils.get_voting_peers()) + 1) == 0:
-                            votes_count = utils.get_votes(election_id=vote['election_id'], address=env("CORE_PEER_ID"), eround=vote['round'])
+                        finalized_elections[vote['election_id']] = True
+                        if winners[0][0] == env("CORE_PEER_ID") and winners[0][1] > (len(utils.get_voting_peers()) + 1) / 2:
                             print("MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), vote['election_id']))
-                            utils.claim_executor(election_id=vote['election_id'], eround=vote['round'], votes=votes_count, core_id=env("CORE_PEER_ID"))
-                            executed_elections.add(vote['election_id'])
-                        eround = 1
+                            utils.claim_executor(election_id=vote['election_id'], eround=int(vote['round']), votes=winners[0][1], core_id=env("CORE_PEER_ID"))
                     else:
-                        if len(winners) == 0:
-                            candidates = utils.get_voting_peers()
-                        else:
-                            candidates = winners
+                        candidates = []
+                        for winner in winners:
+                            if winner[0] != env("CORE_PEER_ID"):
+                                candidates.append(winner[0])
                         candidate = candidates[random.randint(0, len(candidates) - 1)]
-                        eround += 1
-                        print('MALCONVOTE: Peer {} voted successfully on candidate {} in election {} round {}'.format(env("CORE_PEER_ID"), candidate, vote['election_id'], str(eround)))
-                        utils.send_vote(candidate=candidate, election_id=vote['election_id'], eround=eround)
+                        if utils.is_round_finalized(election_id=vote['election_id'], eround=elections_rounds[vote['election_id']]):
+                            elections_rounds[vote['election_id']] += 1
+                            print('MALCONVOTE: Peer {} voted successfully on candidate {} in election {} round {}'.format(env("CORE_PEER_ID"), candidate, vote['election_id'], str(elections_rounds[vote['election_id']])))
+                            utils.send_vote(candidate=candidate, election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
         time.sleep(TIME)
 
 def executors():
@@ -90,8 +88,9 @@ def executors():
         executors = utils.get_transactions_by_tag(tag=get_tag("EXEC"), hashes=hashes, returnAll=False)
         for executor in executors:
             executor = json.loads(executor.signature_message_fragment.decode().replace("\'", "\""))
-            print(executor)
             if utils.verify_executor(election_id=executor['election_id'], executor=executor['core_id'], eround=int(executor['round']), votes_count=int(executor['votes'])) and executor['core_id'] != env("CORE_PEER_ID"):
                 print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['core_id']))
-                utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
+                response = utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
+                if response.status == 200:
+                    print("MALCONEXEC: Token Sent")
         time.sleep(TIME)
