@@ -18,10 +18,10 @@ def home():
 @app.route('/tokens', methods=['POST'])
 def receive_tokens():
     data = request.json
-    helper.store_token(token=data['token'], election_id=data['election_id'])
+    helper.store_token(token=data, election_id=data['election_id'])
     target_peer = helper.get_target_peer(election_id=data['election_id'])
-    if helper.enough_tokens:
-        output = helper.execute_strategy(endpoint=target_peer['endpoint'], election_id=data['election_id'])
+    if helper.enough_tokens(election_id=data['election_id']):
+        output = helper.execute_strategy(peer=target_peer, election_id=data['election_id'])
         return 200, {
             'message': output
         }

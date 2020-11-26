@@ -222,6 +222,9 @@ def send_token(executor: str, election_id: str):
     )
     return response
 
+def store_token(token: str, election_id: str):
+    r.sadd(election_id + "_token", token)
+
 def initiateElec(election_id: str):
     if not r.exists(election_id + "_init"):
         r.sadd(election_id + "_init", 1)

@@ -88,9 +88,14 @@ def executors():
         executors = utils.get_transactions_by_tag(tag=get_tag("EXEC"), hashes=hashes, returnAll=False)
         for executor in executors:
             executor = json.loads(executor.signature_message_fragment.decode().replace("\'", "\""))
-            if utils.verify_executor(election_id=executor['election_id'], executor=executor['core_id'], eround=int(executor['round']), votes_count=int(executor['votes'])) and executor['core_id'] != env("CORE_PEER_ID"):
-                print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['core_id']))
-                response = utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
-                if response.status == 200:
-                    print("MALCONEXEC: Token Sent")
+            if utils.verify_executor(election_id=executor['election_id'], executor=executor['core_id'], eround=int(executor['round']), votes_count=int(executor['votes'])):
+                if executor['core_id'] != env("CORE_PEER_ID"):
+                    print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['core_id']))
+                    response = utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
+                    if response.status == 200:
+                        print("MALCONEXEC: Token Sent")
+                else:
+                    token = utils.generate_token()
+                    utils.store_token(token=token, election_id=executor['election_id'])
+                    print("MALCONEXEC: Generated token")
         time.sleep(TIME)

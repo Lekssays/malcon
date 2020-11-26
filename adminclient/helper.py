@@ -23,7 +23,6 @@ env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
-
 def get_tag(resource: str):
     return "MALCON" + resource.upper() + env("VERSION")
 
@@ -48,10 +47,10 @@ def get_peers():
     return list(peers)
 
 def store_token(token: str, election_id: str):
-    r.sadd(election_id, token)
+    r.sadd(election_id + "_token", token)
 
 def get_tokens(election_id: str):
-    return r.smembers(election_id)
+    return list(r.smembers(election_id + "_token"))
 
 def prepare_payload(election_id: str):
     tokens = get_tokens(election_id=election_id)
@@ -70,7 +69,7 @@ def get_target_peer(election_id: str):
         if election_id == election['election_id']:
             target_peer = election['target']
             break
-    
+
     peers = get_transactions_by_tag(get_tag("TARPEER"), hashes=[], returnAll=True)
     for peer in peers:
         if peer['core_id'] == target_peer:
@@ -78,23 +77,24 @@ def get_target_peer(election_id: str):
 
 def enough_tokens(election_id: str):
     tokens = len(get_tokens(election_id=election_id))
-    peers = len(get_peers)
-    if tokens < math.ceil(peers/2):
+    peers = len(get_peers())
+    if tokens > peers / 2:
         return True
     return False
 
-def execute_strategy(endpoint: str, election_id: str):
+def get_peer_endpoint(peer: dict):
+    if env("CORE_PEER_PORT"):
+        return "http://" + peer['core_id'] + ":" + env("CORE_PEER_PORT")
+    return "http://" + peer['endpoint']
+
+def execute_strategy(peer: dict, election_id: str):
     payload = prepare_payload(election_id=election_id)
     http = urllib3.PoolManager()
+    endpoint = get_peer_endpoint(peer=peer)
     response = http.request(
-        'POST', endpoint,
+        'POST', endpoint + "/tokens",
         headers={'Content-Type': 'application/json'},
         body=payload
     )
     return json.loads(response.data.decode('utf-8'))
-
-def store_election_initiation(election_id: str):
-    if not r.exists(election_id + "_init"):
-        r.sadd(election_id + "_init", 1)
-    return r.exists(election_id + "_init")
  
