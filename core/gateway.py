@@ -27,8 +27,17 @@ def main():
         r.sadd(env("CORE_PEER_ID"), str(register_peer_tx))
         print("Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx))
 
+    # store voting peers locally
     if not r.exists('voting_peers'):
         utils.store_voting_peers(origin=env("CORE_PEER_ID"))
+
+    # initiate strategies
+    # change this boolean to check if its a simulation or real life deployment
+    initiate_strategies = False
+    if initiate_strategies:
+        strategies = utils.load_strategies()
+        for strategy in strategies:
+            utils.add_strategy(name=strategy['name'], commands=strategy['commands'], isFinal=strategy['isFinal'], system=strategy['system'])
 
     # Start all listeners
     elec_thread = threading.Thread(target=listeners.elections)

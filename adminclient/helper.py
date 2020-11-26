@@ -47,13 +47,14 @@ def get_peers():
     return list(peers)
 
 def store_token(token: str, election_id: str):
-    r.sadd(election_id + "_token", token)
+    r.sadd(election_id + "_token", str(token))
 
 def get_tokens(election_id: str):
     return list(r.smembers(election_id + "_token"))
 
 def prepare_payload(election_id: str):
     tokens = get_tokens(election_id=election_id)
+    tokens = map(lambda x: x.decode(), tokens)
     issuer = env("CORE_PEER_ID")
     payload = {
         'tokens': tokens,

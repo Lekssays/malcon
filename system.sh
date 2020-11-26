@@ -122,7 +122,7 @@ function deployVotingSystem() {
   for orgId in 1 2 3
   do
     echo "Deploying voting system on peer0.org$orgId.example.com"
-    docker exec -d peer0.org$orgId.example.com /bin/sh -c "/bin/sh /voting/generate_keypair.sh && python3 /voting/gateway.py"  
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "/bin/sh /core/generate_keypair.sh && python3 /core/gateway.py"  
   done
 }
 

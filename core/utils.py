@@ -18,7 +18,7 @@ from iota import Address
 from iota import Tag
 from iota import TryteString
 
-from models import Vote, Peer, Request, Executor
+from models import Vote, Peer, Request, Executor, Strategy
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
 API = Iota(ENDPOINT, testnet = True)
@@ -223,7 +223,7 @@ def send_token(executor: str, election_id: str):
     return response
 
 def store_token(token: str, election_id: str):
-    r.sadd(election_id + "_token", token)
+    r.sadd(election_id + "_token", str(token))
 
 def initiateElec(election_id: str):
     if not r.exists(election_id + "_init"):
@@ -294,3 +294,26 @@ def get_members_hashes_by_label(label: str):
 def synchronize_hashes(label: str, hashes: list):
     for tx_hash in hashes:
         store_hash(label=label, txhash=tx_hash)
+
+def load_strategies():
+    strategies = []
+    with open("/core/strategies.csv") as f:
+        content = f.readlines()
+        for line in content:
+            line = line.strip().split(",")
+            strategy = {}
+            strategy['name'] = line[0]
+            strategy['commands'] = line[1]
+            strategy['isFinal'] = bool(line[2])
+            strategy['system'] = line[3]
+            strategies.append(strategy)
+    return strategies
+
+def add_strategy(name: str, commands: str, isFinal: bool, system: str):
+    strategy = Strategy()
+    strategy.name = name
+    strategy.commands = commands
+    strategy.isFinal = isFinal
+    strategy.system = system
+    address, message = build_transaction(payload=strategy.get())
+    return send_transaction(address=address, message=message, tag=get_tag("STRA"))
