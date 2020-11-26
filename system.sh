@@ -99,15 +99,23 @@ function checkNetworkStatus() {
   docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 }
 
-function deployWebServer() {
+function installDependencies() {
   for orgId in 1 2 3
   do
     for peerId in 0 1
     do
-      echo "Deploying web server on peer$peerId.org$orgId.example.com"
+      echo "Installing dependencies on peer$peerId.org$orgId.example.com"
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt && python3 /client/app.py"
     done
   done  
+}
+
+function runTargetPeers() {
+  for orgId in 1 2 3
+  do
+    echo "Starting web server on peer1.org$orgId.example.com"
+    docker exec -d peer1.org$orgId.example.com /bin/sh -c "python3 /client/gateway.py && python3 /client/app.py"
+  done    
 }
 
 function deployVotingSystem() {
@@ -319,7 +327,8 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 2
   invokeChaincode "action"
   sleep 5
-  deployWebServer
+  installDependencies
+  runTargetPeers
   #sleep 20
   #deployVotingSystem
 elif [ "${MODE}" == "query" ]; then

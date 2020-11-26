@@ -26,30 +26,11 @@ r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 def get_tag(resource: str):
     return "MALCON" + resource.upper() + env("VERSION")
 
-def generate_address():
-    seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
-    filename = "seed.txt"
-    out = open(filename, "w")
-    out.write(seed.decode())
-    out.close()
-    seed = seed.decode()
-    
-    api = Iota(ENDPOINT, seed, testnet = True)
-    security_level = 2
-    address = api.get_new_addresses(index=0, count=1, security_level = security_level)['addresses'][0]
-    os.environ['IOTA_ADDRESS'] = str(address)
-    filename = "address.txt"
-    out = open(filename, "w")
-    out.write(str(address))
-    out.close()
-    return str(address)
-
 def get_address():
     if os.path.isfile("address.txt"):
         with open("address.txt") as f:
             return f.readline()
-    else:
-        return generate_address()
+    return ""
 
 MYADDRESS = get_address()
 
@@ -172,16 +153,3 @@ def broadcast_execution(strategy_id: str, issuer: str):
     }
     address, message = build_transaction(payload=json.dumps(execution))
     return send_transaction(address=address, message=message, tag=get_tag("EXECUTION"))
-
-def register_target_peer():
-    target_peer = {
-        'endpoint': env("CORE_PEER_ENDPOINT"),
-        'address': get_address(),
-        'core_id': env("CORE_PEER_ID")
-    }
-    address, message = build_transaction(payload=json.dumps(target_peer))
-    r.sadd("registred", "yes")
-    return send_transaction(address=address, message=message, tag=get_tag("TARPEER"))
-
-def isRegistred():
-    return len(r.smembers("registred")) == 1
