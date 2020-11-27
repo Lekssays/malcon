@@ -4,6 +4,7 @@ import datetime
 import json
 import math
 import subprocess
+import threading
 import os.path
 import redis
 import urllib3
@@ -81,30 +82,7 @@ def build_transaction(payload: str):
     message = TryteString.from_unicode(payload)
     return address, message
 
-def read_transaction( tx_hash: str):
-    bundle = API.get_bundles(tx_hash)
-    message = bundle['bundles'][0].tail_transaction.signature_message_fragment
-    message = message.decode().replace("\'", "\"")
-    return json.loads(message)
-
-def get_latest_peer(entries: list): 
-	entries.sort(key = lambda x: x[0], reverse=True) 
-	return entries[0] 
-
-def get_peer_publickey(issuer: str):
-    # TODO: radical refactoring
-    peers = []
-    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
-    for peer in tx_peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        if peer['core_id'] == issuer:
-            peers.append((peer['timestamp'], peer))
-    
-    latest_entry = get_latest_peer(entries=peers)
-    publickey = read_transaction(tx_hash=latest_entry[1])
-    return publickey
-
-def verify_token(token: str, signature: float, issuer: str):
+def verify_token(token: str, signature: float, public_key: str):
     # Check if the token is already used
     if r.sismember("tokens", token):
         return False
@@ -115,63 +93,61 @@ def verify_token(token: str, signature: float, issuer: str):
     token = token.split("_")
     current_timestamp = int(datetime.datetime.now().timestamp())
     token_timestamp = int(token[1])
-    if current_timestamp - token_timestamp > 500:
+    if current_timestamp - token_timestamp > 300:
         return False
     
-    # Check if the signature is correct
-    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
-    for peer in tx_peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        if peer['core_id'] == issuer:
-            publickey = get_peer_publickey(issuer=peer['core_id'])
-            pubkey = RSA.importKey(publickey.encode())
-            thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
-            hashFromSignature = pow(signature, pubkey.e, pubkey.n)
-            return thash == hashFromSignature
-    return False
+    pubkey = RSA.importKey(public_key.encode())
+    thash = int.from_bytes(sha512(token.encode()).digest(), byteorder='big')
+    hashFromSignature = pow(signature, pubkey.e, pubkey.n)
+    return thash == hashFromSignature
 
-def get_peers():
-    peers = set()
+def store_peers():
     tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     for peer in tx_peers:
         peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        peers.add(peer['core_id'])
-    return list(peers)
+        r.sadd("peers", str(peer['core_id']))
 
 def validate_tokens(tokens: list):
-    npeers = len(get_peers())
+    npeers = len(r.smembers("peers"))
     valid_tokens = 0
     for entry in tokens:
-        is_valid = verify_token(token=entry['token'], signature=entry['signature'], issuer=entry['core_id'])
+        is_valid = verify_token(token=entry['token'], signature=entry['signature'], public_key=entry['public_key'])
         if is_valid:
             valid_tokens += 1
     
     # Check if the number of tokens is strictly greater than 50%
-    if valid_tokens < math.ceil(npeers/2):
+    if valid_tokens <= npeers / 2:
         return False
 
     return True
 
-def get_strategy(election_id: str):
-    # TODO: this can be also done with Fabric
-    tx_elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
-    for election in tx_elections:
-        election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
-        if election['election_id'] == election_id:
-            return election['strategy_id']
+def execute_command(command: str):
+    response = subprocess.check_output(command, shell=True)
+    return response.decode()
 
-def execute_stategy(strategy_id: str):
-    # TODO: wait for confirmation of the majority
+def execute_stategies(strategies: list):
+    local_strategies = list(r.smembers("strategies"))
+    commands = []
+    for strategy in local_strategies:
+        strategy = json.loads(strategy)
+        if strategy['name'] in strategies:
+            # TODO: check if it's final or it needs a file or a specific port
+            commands.append(strategy['commands'])
+
+    for command in commands:
+        t = threading.Thread(target=execute_command, args=(command,))
+        t.start()
+
+def store_strategies():
     tx_strategies = get_transactions_by_tag(tag=get_tag("STRA"), hashes=[], returnAll=True)
     for strategy in tx_strategies:
         strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
-        if strategy['strategy_id'] == strategy_id:
-            command = subprocess.check_output(strategy, shell=True)
-            return command.decode()
+        r.sadd("strategies", str({"name": strategy['name'], "commands": strategy}))
 
-def broadcast_execution(strategy_id: str, issuer: str):
+def broadcast_execution(strategies: list, issuer: str, election_id: str):
     execution = {
-        'strategy_id': strategy_id,
+        'election_id': election_id,
+        'strategies': strategies,
         'issuer': issuer
     }
     address, message = build_transaction(payload=json.dumps(execution))
