@@ -154,12 +154,12 @@ func RandomNumber(l int) string {
 // CreateAction issues a new action taken after evaluating the available strategies
 func (s *SmartContract) CreateAction(ctx contractapi.TransactionContextInterface, malwareID string) (string, error) {
 	// TODO: add logic to choose a strategy
-	strategyID := "OLGSLZJTSPRXLNNCKERMB"
+	strategyID := "R"
 	timestamp := fmt.Sprintf("%d", time.Now().Unix())
 
 	// TODO: get target from invoking malware by malware ID
 	// TODO: Create an action for every nerby peer
-	target := "peer0.org1.example.com"
+	target := "peer1.org1.example.com"
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	ra := RandomNumber(10)

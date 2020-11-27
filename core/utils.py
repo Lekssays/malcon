@@ -256,9 +256,7 @@ def isElecFinal(election_id: str, eround: int):
         total_votes += leaderboard[candidate]
         if leaderboard[candidate] == max_votes:
             winners.append((candidate, max_votes))
-    print("ISELECFINAL: MAX_VOTES = ", max_votes)
-    print("ISELECFINAL: ROUND = ", eround)
-    print("ISELECFINAL: WINNERS = ", winners, total_votes)
+    print("MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes)))
     if len(winners) == 1:
         if winners[0][1] > (len(get_voting_peers()) + 1) / 2:
             r.sadd(election_id, eround)

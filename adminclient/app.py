@@ -25,16 +25,12 @@ def receive_tokens():
     if data['election_id']:
         if current_tokens > (peers_count / 2):
             target_peer = helper.get_target_peer(election_id=data['election_id'])
-            #output = helper.execute_strategy(peer=target_peer, election_id=data['election_id'])
+            output = helper.execute_strategy(peer=target_peer, election_id=data['election_id'])
             return {
-                'message': 'execute strategy!',
-                'current_tokens': current_tokens,
-                'peers_count': peers_count
+                'message': output
             }, 200
         return {
-            'message': 'token received!',
-            'current_tokens': current_tokens,
-            'peers_count': peers_count
+            'message': 'token received!'
         }, 200
     return {
         'message': 'failure' 

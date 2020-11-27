@@ -26,25 +26,45 @@ r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 def get_tag(resource: str):
     return "MALCON" + resource.upper() + env("VERSION")
 
+def generate_address():
+    seed = subprocess.check_output("cat /dev/urandom |tr -dc A-Z9|head -c${1:-81}", shell=True)
+    filename = "seed.txt"
+    out = open(filename, "w")
+    out.write(seed.decode())
+    out.close()
+    seed = seed.decode()
+    
+    api = Iota(ENDPOINT, seed, testnet = True)
+    security_level = 2
+    address = api.get_new_addresses(index=0, count=1, security_level = security_level)['addresses'][0]
+    os.environ['IOTA_ADDRESS'] = str(address)
+    filename = "address.txt"
+    out = open(filename, "w")
+    out.write(str(address))
+    out.close()
+    return str(address)
+
 def get_address():
     if os.path.isfile("address.txt"):
         with open("address.txt") as f:
             return f.readline()
-    return ""
+    else:
+        return generate_address()
 
 MYADDRESS = get_address()
 
-def get_transactions_by_tag(tag: str):
-    http = urllib3.PoolManager()
-    command = json.dumps({"command": "findTransactions", "tags": [tag]})
-
-    response = http.request(
-        'POST', ENDPOINT,
-        headers={'Content-Type': 'application/json', 'X-IOTA-API-Version': '1'},
-        body=command
-    )
-    results = json.loads(response.data.decode('utf-8'))
-    return results['hashes']
+def get_transactions_by_tag(tag: str, hashes: list, returnAll: bool):
+    results = API.find_transaction_objects(tags=[tag])
+    if returnAll:
+        return results['transactions']
+    else:
+        transactions = []
+        for tx in results['transactions']:
+            for tx_hash in hashes:
+                cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+                if tx_hash == str(tx.hash) and cur_timestamp - int(tx.timestamp) < 300:
+                    transactions.append(tx)    
+        return transactions
 
 def send_transaction(address: str, message: TryteString, tag: str) -> str:
     tx = ProposedTransaction(
@@ -72,12 +92,13 @@ def get_latest_peer(entries: list):
 	return entries[0] 
 
 def get_peer_publickey(issuer: str):
+    # TODO: radical refactoring
     peers = []
-    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
-    for tx_hash in transactions:
-        peer = read_transaction(tx_hash=tx_hash)
+    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
+    for peer in tx_peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         if peer['core_id'] == issuer:
-            peers.append((peer['timestamp'], tx_hash))
+            peers.append((peer['timestamp'], peer))
     
     latest_entry = get_latest_peer(entries=peers)
     publickey = read_transaction(tx_hash=latest_entry[1])
@@ -98,9 +119,9 @@ def verify_token(token: str, signature: float, issuer: str):
         return False
     
     # Check if the signature is correct
-    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
-    for tx_hash in transactions:
-        peer = read_transaction(tx_hash=tx_hash)
+    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
+    for peer in tx_peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         if peer['core_id'] == issuer:
             publickey = get_peer_publickey(issuer=peer['core_id'])
             pubkey = RSA.importKey(publickey.encode())
@@ -110,12 +131,12 @@ def verify_token(token: str, signature: float, issuer: str):
     return False
 
 def get_peers():
-    peers = []
-    transactions = get_transactions_by_tag(tag=get_tag("PEER"))
-    for tx_hash in transactions:
-        peer = read_transaction(tx_hash=tx_hash)
-        peers.append(peer)
-    return set(peers)
+    peers = set()
+    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
+    for peer in tx_peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
+        peers.add(peer['core_id'])
+    return list(peers)
 
 def validate_tokens(tokens: list):
     npeers = len(get_peers())
@@ -133,15 +154,17 @@ def validate_tokens(tokens: list):
 
 def get_strategy(election_id: str):
     # TODO: this can be also done with Fabric
-    transactions = get_transactions_by_tag(tag=get_tag("ELEC"))
-    for election in transactions:
+    tx_elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
+    for election in tx_elections:
+        election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
         if election['election_id'] == election_id:
             return election['strategy_id']
 
 def execute_stategy(strategy_id: str):
     # TODO: wait for confirmation of the majority
-    transactions = get_transactions_by_tag(tag=get_tag("STRAT"))
-    for strategy in transactions:
+    tx_strategies = get_transactions_by_tag(tag=get_tag("STRA"), hashes=[], returnAll=True)
+    for strategy in tx_strategies:
+        strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
         if strategy['strategy_id'] == strategy_id:
             command = subprocess.check_output(strategy, shell=True)
             return command.decode()
@@ -153,3 +176,13 @@ def broadcast_execution(strategy_id: str, issuer: str):
     }
     address, message = build_transaction(payload=json.dumps(execution))
     return send_transaction(address=address, message=message, tag=get_tag("EXECUTION"))
+
+def register_target_peer():
+    target_peer = {
+        'endpoint': env("CORE_PEER_ENDPOINT"),
+        'address': MYADDRESS,
+        'core_id': env("CORE_PEER_ID")
+    }
+    address, message = build_transaction(payload=json.dumps(target_peer))
+    r.sadd("registred", "yes")
+    return send_transaction(address=address, message=message, tag=get_tag("TARPEER"))

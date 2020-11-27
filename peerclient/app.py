@@ -21,18 +21,14 @@ def receive_tokens():
     tokens = data['tokens']
     election_id = data['election_id']
     issuer = data['issuer']
-    res = helper.validate_tokens(tokens=tokens)
-    if res:
-        strategy_id = helper.get_strategy(election_id=election_id)
-        tx_hash = helper.broadcast_execution(strategy_id=strategy_id, issuer=issuer)
-        output = helper.execute_stategy(strategy_id=strategy_id)
-        return 200, {
-            'message': output,
-            'tx_hash': tx_hash
-        }
+    # TODO: Validate Tokens
+    return {
+        'tokens': tokens,
+        'election_id': election_id,
+        'issuer': issuer
+    }, 200
 
-    return 400, {
-        'message': 'failure' 
-    }
-
-app.run(host='0.0.0.0', port=env.int("CORE_PEER_PORT"))
+try:
+    app.run(host='0.0.0.0', port=env.int("CORE_PEER_PORT"))
+except Exception as e:
+    app.run(host='0.0.0.0', port=5000)

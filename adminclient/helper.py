@@ -55,7 +55,7 @@ def get_tokens(election_id: str):
 
 def prepare_payload(election_id: str):
     tokens = get_tokens(election_id=election_id)
-    tokens = map(lambda x: x.decode(), tokens)
+    tokens = list(map(lambda x: x.decode(), tokens))
     issuer = env("CORE_PEER_ID")
     payload = {
         'tokens': tokens,
