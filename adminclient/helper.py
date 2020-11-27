@@ -43,6 +43,7 @@ def get_peers():
     peers = set()
     tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     for peer in tx_peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         peers.add(peer['core_id'])
     return list(peers)
 
@@ -67,21 +68,19 @@ def get_target_peer(election_id: str):
     elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
     target_peer = ""
     for election in elections:
+        election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
         if election_id == election['election_id']:
             target_peer = election['target']
             break
 
     peers = get_transactions_by_tag(get_tag("TARPEER"), hashes=[], returnAll=True)
     for peer in peers:
+        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
         if peer['core_id'] == target_peer:
             return peer
 
-def enough_tokens(election_id: str):
-    tokens = len(get_tokens(election_id=election_id))
-    peers = len(get_peers())
-    if tokens > peers / 2:
-        return True
-    return False
+def current_tokens(election_id: str):
+    return len(get_tokens(election_id=election_id))
 
 def get_peer_endpoint(peer: dict):
     if env("CORE_PEER_PORT"):
