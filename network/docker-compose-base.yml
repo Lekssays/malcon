@@ -2,7 +2,7 @@ version: '2'
 
 services:
   peer-base:
-    image: hyperledger/fabric-peer:2.0
+    image: hyperledger/fabric-peer-malcon:latest
     environment:
     - VERSION=VT
     - FABRIC_LOGGING_SPEC=debug
