@@ -344,15 +344,15 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 3
   createChannel
   sleep 3
-  # deployChaincode "malware"
-  # sleep 2
+  deployChaincode "malware"
+  sleep 2
   # deployChaincode "pubkey"
   # sleep 2
   # deployChaincode "strategy"
   # sleep 2
   deployChaincode "action"
-  # sleep 2
-  # invokeChaincode "malware"
+  sleep 2
+  invokeChaincode "malware"
   # sleep 2
   # invokeChaincode "pubkey"
   # sleep 2
