@@ -58,9 +58,9 @@ def prepare_payload(election_id: str):
     tokens = list(map(lambda x: x.decode(), tokens))
     issuer = env("CORE_PEER_ID")
     payload = {
-        'tokens': tokens,
-        'election_id': election_id,
-        'issuer': issuer
+        "tokens": tokens,
+        "election_id": election_id,
+        "issuer": issuer
     }
     return json.dumps(payload)
 
