@@ -96,7 +96,7 @@ def executors():
                         print("MALCONEXEC: Token Sent - Response ", response.data.decode('utf-8'))
                 else:
                     token, signature = utils.generate_token()
-                    with open("/core/" + env("CORE_PEER_ID") + "_public_key.pem", "r") as f:
+                    with open(env("CORE_MAIN_PATH") + "/" + env("CORE_PEER_ID") + "_public_key.pem", "r") as f:
                         public_key = f.read()
                     payload = {"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": executor['election_id'], "public_key": public_key}
                     utils.store_token(token=payload, election_id=executor['election_id'])

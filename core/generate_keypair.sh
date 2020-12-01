@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 openssl genrsa -out ${CORE_PEER_ID}_private_key.pem 2048
 

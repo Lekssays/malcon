@@ -45,10 +45,16 @@ function setVariables() {
   export CORE_PEER_MSPCONFIGPATH=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org${orgId}.example.com/users/Admin@org${orgId}.example.com/msp    
 }
 
-function networkDown() {
+function restartNetwork() {
+  docker rm -f $(docker ps -aq) || true
+  #docker rmi -f $(docker images -a -q) || true
+  docker volume rm $(docker volume ls)  || true
+}
+
+function clearNetwork {
   docker rm -f $(docker ps -aq) || true
   docker rmi -f $(docker images -a -q) || true
-  docker volume rm $(docker volume ls)  || true
+  docker volume rm $(docker volume ls)  || true  
 }
 
 function generateBlocks() {
@@ -105,27 +111,24 @@ function installDependencies() {
     for peerId in 0 1
     do
       echo "Installing dependencies on peer$peerId.org$orgId.example.com"
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt && /bin/sh /core/generate_keypair.sh"
     done
   done  
 }
 
-function runDaemons() {
+function runEndpoints() {
   for orgId in 1 2 3
   do
-    for peerId in 0 1
-    do
-      echo "Starting daemon on peer$peerId.org$orgId.example.com"
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py"
-    done
-  done    
+    echo "Running gateway on peer0.org$orgId.example.com..."
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "python3 /client/app.py" 
+  done
 }
 
-function deployVotingSystem() {
+function runGateways() {
   for orgId in 1 2 3
   do
-    echo "Deploying voting system on peer0.org$orgId.example.com"
-    docker exec -d peer0.org$orgId.example.com /bin/sh -c "/bin/sh /core/generate_keypair.sh && python3 /core/gateway.py"  
+    echo "Running gateway on peer0.org$orgId.example.com..."
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "python3 /core/gateway.py"  
   done
 }
 
@@ -305,8 +308,10 @@ elif [ "${MODE}" == "netstat" ]; then
   checkNetworkStatus
 elif [ "${MODE}" == "createC" ]; then
   createChannel
+elif [ "${MODE}" == "clear" ]; then
+  clearNetwork
 elif [ "${MODE}" == "restart" ]; then
-  networkDown
+  restartNetwork
   sleep 2
   generateBlocks
   sleep 2
@@ -314,6 +319,7 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 3
   createChannel
   sleep 3
+
   # deployChaincode "malware"
   # sleep 2
   # deployChaincode "pubkey"
@@ -331,8 +337,6 @@ elif [ "${MODE}" == "restart" ]; then
   invokeChaincode "action"
   sleep 5
   installDependencies
-  sleep 5
-  runDaemons
   #sleep 20
   #deployVotingSystem
 elif [ "${MODE}" == "query" ]; then
