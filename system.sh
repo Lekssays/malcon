@@ -122,7 +122,7 @@ function configureRedis() {
     for peerId in 0 1
     do
       echo "Configuring redis on peer$peerId.org$orgId.example.com"
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh c "cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf"
     done
   done  
 }
@@ -133,7 +133,7 @@ function generateKeys() {
     for peerId in 0 1
     do
       echo "Generating keys on peer$peerId.org$orgId.example.com..."
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "/bin/sh /core/generate_keypair.sh"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "/bin/sh /core/generate_keypair.sh &"
     done
   done  
 }
@@ -144,7 +144,7 @@ function runEndpoints() {
     for peerId in 0 1
     do
       echo "Running endpoint on peer$peerId.org$orgId.example.com..."
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py &"
     done
   done
 }
@@ -362,12 +362,12 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 5
   #installDependencies
   #sleep 1
-  configureRedis
-  sleep 1
   generateKeys
-  sleep 1
+  sleep 3
+  configureRedis
+  sleep 3
   runEndpoints
-  sleep 1
+  #sleep 3
   #runGateways
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
