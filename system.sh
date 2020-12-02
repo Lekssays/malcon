@@ -144,7 +144,7 @@ function runEndpoints() {
     for peerId in 0 1
     do
       echo "Running endpoint on peer$peerId.org$orgId.example.com..."
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py &"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py"
     done
   done
 }

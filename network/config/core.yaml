@@ -59,7 +59,7 @@ peer:
             interval: 60s
             # Timeout is the duration the client waits for a response from
             # peer nodes before closing the connection
-            timeout: 60s
+            timeout: 120s
         # DeliveryClient keepalive settings for communication with ordering
         # nodes.
         deliveryClient:
@@ -69,7 +69,7 @@ peer:
             interval: 60s
             # Timeout is the duration the client waits for a response from
             # ordering nodes before closing the connection
-            timeout: 60s
+            timeout: 120s
 
 
     # Gossip related configuration
@@ -132,9 +132,9 @@ peer:
         # Should we skip verifying block messages or not (currently not in use)
         skipBlockVerification: false
         # Dial timeout(unit: second)
-        dialTimeout: 60s
+        dialTimeout: 120s
         # Connection timeout(unit: second)
-        connTimeout: 60s
+        connTimeout: 120s
         # Buffer size of received messages
         recvBuffSize: 20
         # Buffer size of sending messages
@@ -150,9 +150,9 @@ peer:
         # Alive check interval(unit: second)
         aliveTimeInterval: 5s
         # Alive expiration timeout(unit: second)
-        aliveExpirationTimeout: 60s
+        aliveExpirationTimeout: 120s
         # Reconnect interval(unit: second)
-        reconnectInterval: 60s
+        reconnectInterval: 120s
         # This is an endpoint that is published to peers outside of the organization.
         # If this isn't set, the peer will not be known to other organizations.
         externalEndpoint:
@@ -313,7 +313,7 @@ peer:
     # CLI common client config options
     client:
         # connection timeout
-        connTimeout: 60s
+        connTimeout: 120s
 
     # Delivery service related config
     deliveryclient:
@@ -322,7 +322,7 @@ peer:
         reconnectTotalTimeThreshold: 3600s
 
         # It sets the delivery service <-> ordering service node connection timeout
-        connTimeout: 60s
+        connTimeout: 120s
 
         # It sets the delivery service maximal delay between consecutive retries
         reConnectBackoffThreshold: 3600s
@@ -518,7 +518,7 @@ chaincode:
 
     # Timeout duration for starting up a container and waiting for Register
     # to come through. 1sec should be plenty for chaincode unit tests
-    startuptimeout: 30s
+    startuptimeout: 60s
 
     # Timeout duration for Invoke and Init calls to prevent runaway.
     # This timeout is used by all chaincodes in all the channels, including
@@ -528,7 +528,7 @@ chaincode:
     # build the image, which might take more time. In production environment,
     # the chaincode image is unlikely to be deleted, so the timeout could be
     # reduced accordingly.
-    executetimeout: 30s
+    executetimeout: 120s
 
     # There are 2 modes: "dev" and "net".
     # In dev mode, user runs the chaincode after starting peer from
@@ -607,7 +607,7 @@ ledger:
        # Number of retries for CouchDB errors during peer startup
        maxRetriesOnStartup: 12
        # CouchDB request timeout (unit: duration, e.g. 20s)
-       requestTimeout: 35s
+       requestTimeout: 60s
        # Limit on the number of records per each CouchDB query
        # Note that chaincode queries are only bound by totalQueryLimit.
        # Internally the chaincode may execute multiple CouchDB queries,
