@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -101,7 +102,13 @@ func CreateElection(electionID string, timestamp string, target string, strategi
 	// Just a dummy address and a seed that is not used since the transaction has zero value (expected by iota)
 	const address = trinary.Trytes("ZLGVEQ9JUZZWCZXLWVNTHBDX9G9KZTJP9VEERIIFHY9SIQKYBVAHIMLHXPQVE9IXFDDXNHQINXJDRPFDXNYVAPLZAW")
 	const seed = trinary.Trytes("JBN9ZRCOH9YRUGSWIQNZWAIFEZUBDUGTFPVRKXWPAUCEQQFS9NHPQLXCKZKRHVCCUZNF9CZZWKXRZVCWQ")
-	var data = fmt.Sprintf("{'election_id' : '%s', 'timestamp': '%s', 'target': '%s', 'strategies': %+v}", electionID, timestamp, target, strategies)
+
+	for i := range strategies {
+		strategies[i] = "\"" + strategies[i] + "\""
+	}
+	printableStrategies := strings.Join(strategies, ",")
+
+	var data = fmt.Sprintf("{\"election_id\" : \"%s\", \"timestamp\": \"%s\", \"target\": \"%s\", \"strategies\": \"[\" + \"%+v\" + \"]\"}", electionID, timestamp, target, printableStrategies)
 	message, err := converter.ASCIIToTrytes(data)
 
 	if err != nil {

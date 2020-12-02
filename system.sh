@@ -295,19 +295,15 @@ if [ "${MODE}" == "up" ]; then
   sleep 3
   deployChaincode "malware"
   sleep 2
-  deployChaincode "pubkey"
-  sleep 2
-  deployChaincode "strategy"
-  sleep 2
   deployChaincode "action"
+  sleep 2
+  deployChaincode "peer"
   sleep 2
   invokeChaincode "malware"
   sleep 2
-  invokeChaincode "pubkey"
-  sleep 2
-  invokeChaincode "strategy"
-  sleep 2
   invokeChaincode "action"
+  sleep 2
+  invokeChaincode "peer"
 elif [ "${MODE}" == "down" ]; then
   networkDown
 elif [ "${MODE}" == "clear" ]; then
@@ -315,20 +311,17 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "monitor" ]; then
   monitorNetwork
 elif [ "${MODE}" == "deployCC" ]; then
-  deployChaincode "malware"
+  #deployChaincode "malware"
   sleep 2
-  deployChaincode "pubkey"
-  sleep 2
-  deployChaincode "strategy"
-  sleep 2
+  deployChaincode "action"
+  # sleep 2
+  # deployChaincode "peer"
 elif [ "${MODE}" == "invokeCC" ]; then
   invokeChaincode "malware"
   sleep 2
-  invokeChaincode "pubkey"
-  sleep 2
-  invokeChaincode "strategy"
-  sleep 2
   invokeChaincode "action"
+  # sleep 2
+  # invokeChaincode "peer"  
 elif [ "${MODE}" == "netstat" ]; then
   checkNetworkStatus
 elif [ "${MODE}" == "createC" ]; then
@@ -346,19 +339,15 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 3
   deployChaincode "malware"
   sleep 2
-  # deployChaincode "pubkey"
-  # sleep 2
-  # deployChaincode "strategy"
-  # sleep 2
   deployChaincode "action"
   sleep 2
+  # deployChaincode "peer"
+  # sleep 2
   invokeChaincode "malware"
-  # sleep 2
-  # invokeChaincode "pubkey"
-  # sleep 2
-  # invokeChaincode "strategy"
   sleep 2
   invokeChaincode "action"
+  # sleep 2
+  # invokeChaincode "peer"
   sleep 5
   #installDependencies
   #sleep 1
