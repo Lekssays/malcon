@@ -1,4 +1,4 @@
-module github.com/Lekssays/malcon/chaincodes/actioncc
+module github.com/Lekssays/malcon/chaincodes/malwarecc
 
 go 1.14
 
