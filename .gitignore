@@ -11,3 +11,4 @@ seed.txt
 address.txt
 *.rd.conf
 helper.txt
+.DS_Store
