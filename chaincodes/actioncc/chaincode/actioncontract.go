@@ -108,7 +108,7 @@ func CreateElection(electionID string, timestamp string, target string, strategi
 	}
 	printableStrategies := strings.Join(strategies, ",")
 
-	var data = fmt.Sprintf("{\"election_id\" : \"%s\", \"timestamp\": \"%s\", \"target\": \"%s\", \"strategies\": \"[%+v]\", \"ports\": []}", electionID, timestamp, target, printableStrategies)
+	var data = fmt.Sprintf("{\"election_id\" : \"%s\", \"timestamp\": \"%s\", \"target\": \"%s\", \"strategies\": [%+v], \"ports\": []}", electionID, timestamp, target, printableStrategies)
 	message, err := converter.ASCIIToTrytes(data)
 
 	if err != nil {
@@ -253,10 +253,10 @@ func (s *SmartContract) CreateAction(ctx contractapi.TransactionContextInterface
 	maliciousActions := []string{"M"}
 	propagates := false
 
+	log.Infof("MALWARE_ID: %s", malwareID)
 	chainCodeArgs := util.ToChaincodeArgs("ReadMalware", malwareID)
 	response := ctx.GetStub().InvokeChaincode("malware", chainCodeArgs, "mychannel")
-	fmt.Println(response.Status)
-	fmt.Printf("Reponse message: %s", response.Message)
+	log.Infof("Query chaincode: %s", string(response.Payload))
 
 	// TODO: get peer info (detector) QueryChaincode
 	// peerID (target) and neighbors
@@ -286,7 +286,6 @@ func (s *SmartContract) CreateAction(ctx contractapi.TransactionContextInterface
 	}
 
 	actionJSON, err := json.Marshal(action)
-	log.Infof("Action object: %s", string(actionJSON))
 
 	if err != nil {
 		return "", err
