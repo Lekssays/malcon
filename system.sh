@@ -311,17 +311,13 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "monitor" ]; then
   monitorNetwork
 elif [ "${MODE}" == "deployCC" ]; then
-  #deployChaincode "malware"
+  deployChaincode "malware"
   sleep 2
-  deployChaincode "action"
-  # sleep 2
-  # deployChaincode "peer"
+  deployChaincode "peer"
 elif [ "${MODE}" == "invokeCC" ]; then
   invokeChaincode "malware"
   sleep 2
-  invokeChaincode "action"
-  # sleep 2
-  # invokeChaincode "peer"  
+  invokeChaincode "peer"  
 elif [ "${MODE}" == "netstat" ]; then
   checkNetworkStatus
 elif [ "${MODE}" == "createC" ]; then
@@ -339,13 +335,9 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 3
   deployChaincode "malware"
   sleep 2
-  deployChaincode "action"
-  sleep 2
   # deployChaincode "peer"
   # sleep 2
   invokeChaincode "malware"
-  sleep 2
-  invokeChaincode "action"
   # sleep 2
   # invokeChaincode "peer"
   sleep 5
