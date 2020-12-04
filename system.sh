@@ -335,11 +335,11 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 3
   deployChaincode "malware"
   sleep 2
-  # deployChaincode "peer"
-  # sleep 2
+  deployChaincode "peer"
+  sleep 2
   invokeChaincode "malware"
-  # sleep 2
-  # invokeChaincode "peer"
+  sleep 2
+  invokeChaincode "peer"
   sleep 5
   #installDependencies
   #sleep 1

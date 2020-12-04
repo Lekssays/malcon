@@ -1,4 +1,4 @@
-module github.com/Lekssays/malcon/chaincodes/malwarecc
+module github.com/Lekssays/malcon/chaincodes/peercc
 
 go 1.14
 

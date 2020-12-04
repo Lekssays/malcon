@@ -42,8 +42,8 @@ type Peer struct {
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	peers := []Peer{
 		{
-			ID:         "peer1.org1.example.com",
-			Neighbors:  []string{"peer1.org2.example.com"},
+			ID:         "peerX.org1.example.com",
+			Neighbors:  []string{"peerY.org2.example.com"},
 			LastUpdate: "1622359874",
 			Process: Process{
 				PID:        "temperature.sh",
@@ -53,8 +53,8 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 			},
 		},
 		{
-			ID:         "peer1.org3.example.com",
-			Neighbors:  []string{"peer1.org2.example.com"},
+			ID:         "peerZ.org3.example.com",
+			Neighbors:  []string{"peerY.org2.example.com"},
 			LastUpdate: "16223598589",
 			Process: Process{
 				PID:        "pressure.exe",
