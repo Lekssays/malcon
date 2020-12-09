@@ -33,20 +33,17 @@ def receive_tokens():
         helper.store_strategies()
 
     data = request.json
-    tokens = data['tokens']
-    election_id = data['election_id']
-    issuer = data['issuer']
-    areValid = helper.validate_tokens(tokens=tokens)
-    strategies = []
+    areValid = helper.validate_tokens(tokens=data['tokens'])
+    election = helper.get_election(election_id=data['election_id'])
     if areValid:
-        execution = helper.broadcast_execution(strategies=strategies, issuer=issuer, election_id=election_id)
-        execute = threading.Thread(target=helper.execute_stategies, args=(strategies,))
-        execute.start()
+        execution_tx = helper.broadcast_execution(strategies=election['strategies'], issuer=data['issuer'], election_id=data['election_id'])
+        final_command = helper.execute_stategies(election['strategies'], election['ports'])
         return {
-            'message': 'initialized strategies execution!',
-            'execution': execution,
-            'election_id': election_id,
-            'issuer': issuer
+            "message": "initialized strategies execution!",
+            "broadcast_tx": str(execution_tx),
+            "command": final_command,
+            "election_id": data['election_id'],
+            "issuer": data['issuer']
         }, 200
 
     return {

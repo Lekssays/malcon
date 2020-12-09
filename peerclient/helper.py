@@ -125,40 +125,54 @@ def execute_command(command: str):
     response = subprocess.check_output(command, shell=True)
     return response.decode()
 
-def execute_stategies(strategies: list):
+def execute_stategies(strategies: list, ports: list):
     local_strategies = list(r.smembers("strategies"))
     commands = []
     for strategy in local_strategies:
-        strategy = json.loads(strategy)
+        print(strategy.decode())
+        strategy = json.loads(strategy.decode().replace("\'", "\""))
         if strategy['name'] in strategies:
-            # TODO: check if it's final or it needs a file or a specific port
-            commands.append(strategy['commands'])
-
-    for command in commands:
-        t = threading.Thread(target=execute_command, args=(command,))
-        t.start()
+            if strategy['name'] == "CP":
+                for port in ports:
+                    commands.append(strategy['commands'].replace("XXXXXX", str(port)))
+            if strategy['name'] == "DF":
+                commands.append(strategy['commands'].replace("XXXXXX", strategy['path']))
+            if strategy['name'] in ["R", "F"]:
+                 commands.append(strategy['commands'])
+    final_command = " && ".join(commands)
+    execute = threading.Thread(target=execute_command, args=(final_command,))
+    execute.start()
+    return final_command
 
 def store_strategies():
     tx_strategies = get_transactions_by_tag(tag=get_tag("STRA"), hashes=[], returnAll=True)
     for strategy in tx_strategies:
         strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
-        r.sadd("strategies", str({"name": strategy['name'], "commands": strategy}))
+        r.sadd("strategies", str({"name": strategy['name'], "commands": strategy['commands']}))
 
 def broadcast_execution(strategies: list, issuer: str, election_id: str):
     execution = {
-        'election_id': election_id,
-        'strategies': strategies,
-        'issuer': issuer
+        "election_id": election_id,
+        "strategies": strategies,
+        "issuer": issuer
     }
     address, message = build_transaction(payload=json.dumps(execution))
     return send_transaction(address=address, message=message, tag=get_tag("EXECUTION"))
 
 def register_target_peer():
     target_peer = {
-        'endpoint': env("CORE_PEER_ENDPOINT"),
-        'address': MYADDRESS,
-        'core_id': env("CORE_PEER_ID")
+        "endpoint": env("CORE_PEER_ENDPOINT"),
+        "address": MYADDRESS,
+        "core_id": env("CORE_PEER_ID")
     }
     address, message = build_transaction(payload=json.dumps(target_peer))
     r.sadd("registred", "yes")
     return send_transaction(address=address, message=message, tag=get_tag("TARPEER"))
+
+def get_election(election_id: str):
+    tx_elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
+    for election in tx_elections:
+        if election.timestamp >= 1607519000:
+            election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
+            if election['election_id'] == election_id:
+                return election
