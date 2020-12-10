@@ -235,8 +235,11 @@ def initiateElec(election_id: str):
 def get_current_votes(election_id: str):
     return len(list(get_members_by_label(label="votes")))
 
+def finalize_round(election_id: str, eround: int):
+    r.sadd(election_id + "_rounds", eround)
+
 def is_round_finalized(election_id: str, eround: int):
-    rounds = list(r.smembers(election_id))
+    rounds = list(r.smembers(election_id + "_rounds"))
     if eround in rounds:
         return True
     return False

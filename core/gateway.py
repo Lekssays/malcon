@@ -45,11 +45,13 @@ def main():
     votes_thread = threading.Thread(target=listeners.votes)
     exec_thread = threading.Thread(target=listeners.executors)
     emerg_thread = threading.Thread(target=listeners.emergency)
+    broad_thread = threading.Thread(target=listeners.broadcasts)
     elec_thread.start()
     reqs_thread.start()
     votes_thread.start()
     exec_thread.start()
     emerg_thread.start()
+    broad_thread.start()
 
 if __name__ == "__main__":
     main()

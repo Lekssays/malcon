@@ -27,7 +27,7 @@ def receive_tokens():
             target_peer = helper.get_target_peer(election_id=data['election_id'])
             output = helper.execute_strategy(peer=target_peer, election_id=data['election_id'])
             return {
-                'message': str(output)
+                'message': output
             }, 200
         return {
             'message': 'token received!'

@@ -55,7 +55,7 @@ def get_tokens(election_id: str):
 
 def prepare_payload(election_id: str):
     tokens = get_tokens(election_id=election_id)
-    tokens = list(map(lambda x: x.decode(), tokens))
+    tokens = list(map(lambda x: json.loads(x.decode().replace("\'", "\"")), tokens))
     issuer = env("CORE_PEER_ID")
     payload = {
         "tokens": tokens,
@@ -68,10 +68,12 @@ def get_target_peer(election_id: str):
     elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
     target_peer = ""
     for election in elections:
-        election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
-        if election_id == election['election_id']:
-            target_peer = election['target']
-            break
+        # New version of the election object
+        if election.timestamp >= 1607522400:
+            election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
+            if election_id == election['election_id']:
+                target_peer = election['target']
+                break
 
     peers = get_transactions_by_tag(get_tag("TARPEER"), hashes=[], returnAll=True)
     for peer in peers:
@@ -96,5 +98,4 @@ def execute_strategy(peer: dict, election_id: str):
         headers={'Content-Type': 'application/json'},
         body=payload
     )
-    return json.loads(response.data.decode('utf-8'))
- 
+    return response.data.decode('utf-8')

@@ -90,9 +90,9 @@ def verify_token(token: str, signature: float, public_key: str):
         r.sadd("tokens", token)
     
     # Check if the token is not expired
-    token = token.split("_")
+    tmp_token = token.split("_")
     current_timestamp = int(datetime.datetime.now().timestamp())
-    token_timestamp = int(token[1])
+    token_timestamp = int(tmp_token[1])
     if current_timestamp - token_timestamp > 300:
         return False
     
@@ -150,11 +150,12 @@ def store_strategies():
         strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
         r.sadd("strategies", str({"name": strategy['name'], "commands": strategy['commands']}))
 
-def broadcast_execution(strategies: list, issuer: str, election_id: str):
+def broadcast_execution(strategies: list, issuer: str, election_id: str, command: str):
     execution = {
         "election_id": election_id,
         "strategies": strategies,
-        "issuer": issuer
+        "issuer": issuer,
+        "command": command
     }
     address, message = build_transaction(payload=json.dumps(execution))
     return send_transaction(address=address, message=message, tag=get_tag("EXECUTION"))

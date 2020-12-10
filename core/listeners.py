@@ -69,6 +69,7 @@ def votes():
                             print("MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), vote['election_id']))
                             utils.claim_executor(election_id=vote['election_id'], eround=int(vote['round']), votes=winners[0][1], core_id=env("CORE_PEER_ID"))
                     else:
+                        utils.finalize_round(election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
                         candidates = []
                         for winner in winners:
                             if winner[0] != env("CORE_PEER_ID"):
@@ -93,14 +94,14 @@ def executors():
                     print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['core_id']))
                     response = utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
                     if response.status == 200:
-                        print("MALCONEXEC: Token Sent - Response ", response.data.decode('utf-8'))
+                        print("MALCONEXEC: token has been sent")
                 else:
                     token, signature = utils.generate_token()
                     with open(env("CORE_MAIN_PATH") + "/" + env("CORE_PEER_ID") + "_public_key.pem", "r") as f:
                         public_key = f.read()
                     payload = {"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": executor['election_id'], "public_key": public_key}
                     utils.store_token(token=payload, election_id=executor['election_id'])
-                    print("MALCONEXEC: Generated token - Token = ", payload)
+                    print("MALCONEXEC: token has been generated")
         time.sleep(TIME)
 
 def emergency():
@@ -116,4 +117,16 @@ def emergency():
                 print("MALCONEMERG: Executing emergency strategy...")
                 response = utils.execute_strategy(ports=emergency['ports'])
                 print("MALCONEMERG: Execution Code = {}".format(str(response)))
-        time.sleep(TIME)    
+        time.sleep(TIME)
+
+
+def broadcasts():
+    print("Listening on MALCONEXECUTION tag...")
+    while True:
+        hashes = list(set(utils.get_transactions_hashes_by_tag(tag=get_tag("EXECUTION"))) ^ set(utils.get_members_hashes_by_label(label="executions")))
+        utils.synchronize_hashes(hashes=hashes, label="executions")
+        executions = utils.get_transactions_by_tag(tag=get_tag("EXECUTION"), hashes=hashes, returnAll=False)
+        for execution in executions:
+            execution = json.loads(execution.signature_message_fragment.decode().replace("\'", "\""))
+            print("MALCONEXECUTION: ", execution)
+        time.sleep(TIME)
