@@ -125,7 +125,7 @@ def execute_command(command: str):
     response = subprocess.check_output(command, shell=True)
     return response.decode()
 
-def execute_stategies(strategies: list, ports: list):
+def execute_stategies(strategies: list, ports: list, path: str):
     local_strategies = list(r.smembers("strategies"))
     commands = []
     for strategy in local_strategies:
@@ -136,7 +136,7 @@ def execute_stategies(strategies: list, ports: list):
                 for port in ports:
                     commands.append(strategy['commands'].replace("XXXXXX", str(port)))
             if strategy['name'] == "DF":
-                commands.append(strategy['commands'].replace("XXXXXX", strategy['path']))
+                commands.append(strategy['commands'].replace("XXXXX", path))
             if strategy['name'] in ["R", "F"]:
                  commands.append(strategy['commands'])
     final_command = " && ".join(commands)

@@ -33,11 +33,11 @@ def receive_tokens():
         helper.store_strategies()
 
     data = request.json
-    areValid = helper.validate_tokens(tokens=data['tokens'])
+    # areValid = helper.validate_tokens(tokens=data['tokens'])
     election = helper.get_election(election_id=data['election_id'])
-    if areValid:
+    if True:
         execution_tx = helper.broadcast_execution(strategies=election['strategies'], issuer=data['issuer'], election_id=data['election_id'])
-        final_command = helper.execute_stategies(election['strategies'], election['ports'])
+        final_command = helper.execute_stategies(strategies=election['strategies'], ports=election['ports'], path=election['path'])
         return {
             "message": "initialized strategies execution!",
             "broadcast_tx": str(execution_tx),

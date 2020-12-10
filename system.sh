@@ -311,8 +311,8 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "monitor" ]; then
   monitorNetwork
 elif [ "${MODE}" == "deployCC" ]; then
-  deployChaincode "malware"
-  sleep 2
+  # deployChaincode "malware"
+  # sleep 2
   deployChaincode "peer"
 elif [ "${MODE}" == "invokeCC" ]; then
   invokeChaincode "malware"
