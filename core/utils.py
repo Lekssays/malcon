@@ -6,6 +6,7 @@ import os.path
 import random
 import redis
 import subprocess
+import threading
 import urllib3
 
 from collections import defaultdict
@@ -315,3 +316,23 @@ def add_strategy(name: str, commands: str, isFinal: bool, system: str):
     strategy.system = system
     address, message = build_transaction(payload=strategy.get())
     return send_transaction(address=address, message=message, tag=get_tag("STRA"))
+
+def get_neighbors():
+    neighbors = env("CORE_PEER_NEIGHBORS")
+    if "None" not in neighbors:
+        return neighbors.split(",")
+    return ""
+
+def execute_command(command: str):
+    response = subprocess.check_output(command, shell=True)
+    return response.decode()
+
+def execute_strategy(ports: list):
+    commands = []
+    command = "ufw disallow XXXXXX"
+    for port in ports:
+        commands.append(command.replace("XXXXXX", str(port)))
+    final_command = " && ".join(commands)
+    execute = threading.Thread(target=execute_command, args=(final_command,))
+    execute.start()
+    return final_command

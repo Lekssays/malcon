@@ -1,4 +1,4 @@
-R,sudo reboot,1,ubuntu
-DF,sudo rm XXXXX,0,ubuntu
-CP,sudo ufw disallow XXXXXX,0,ubuntu
+R,reboot,1,Linux
+DF,rm XXXXX,0,Linux
+CP,ufw disallow XXXXXX,0,Linux
 F,sudo dpkg --configure -a && sudo apt-get update && sudo apt-get -f install && sudo apt-get full-upgrade && sudo apt-get install --reinstall ubuntu-desktop && sudo apt-get autoremove && sudo apt-get clean && sudo reboot,1,ubuntu

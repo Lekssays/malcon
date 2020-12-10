@@ -102,3 +102,18 @@ def executors():
                     utils.store_token(token=payload, election_id=executor['election_id'])
                     print("MALCONEXEC: Generated token - Token = ", payload)
         time.sleep(TIME)
+
+def emergency():
+    print("Listening on MALCONEMERG tag...")
+    while True:
+        hashes = list(set(utils.get_transactions_hashes_by_tag(tag=get_tag("EMERG"))) ^ set(utils.get_members_hashes_by_label(label="executors")))
+        utils.synchronize_hashes(hashes=hashes, label="emergency")
+        emergencies = utils.get_transactions_by_tag(tag=get_tag("EMERG"), hashes=hashes, returnAll=False)
+        for emergency in emergencies:
+            emergency = json.loads(emergency.signature_message_fragment.decode().replace("\'", "\""))
+            neighbors = utils.get_neighbors()
+            if emergency['issuer'] in neighbors:
+                print("MALCONEMERG: Executing emergency strategy...")
+                response = utils.execute_strategy(ports=emergency['ports'])
+                print("MALCONEMERG: Execution Code = {}".format(str(response)))
+        time.sleep(TIME)    

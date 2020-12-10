@@ -125,7 +125,7 @@ def execute_command(command: str):
     response = subprocess.check_output(command, shell=True)
     return response.decode()
 
-def execute_stategies(strategies: list, ports: list, path: str):
+def execute_strategies(strategies: list, ports: list, path: str):
     local_strategies = list(r.smembers("strategies"))
     commands = []
     for strategy in local_strategies:
