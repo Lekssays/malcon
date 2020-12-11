@@ -235,15 +235,6 @@ def initiateElec(election_id: str):
 def get_current_votes(election_id: str):
     return len(list(get_members_by_label(label="votes")))
 
-def finalize_round(election_id: str, eround: int):
-    r.sadd(election_id + "_rounds", eround)
-
-def is_round_finalized(election_id: str, eround: int):
-    rounds = list(r.smembers(election_id + "_rounds"))
-    if eround in rounds:
-        return True
-    return False
-
 def isElecFinal(election_id: str, eround: int):
     votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
@@ -264,7 +255,7 @@ def isElecFinal(election_id: str, eround: int):
     if len(winners) == 1:
         if winners[0][1] > (len(get_voting_peers()) + 1) / 2:
             r.sadd(election_id, eround)
-    return winners
+    return winners, total_votes
 
 def get_peer_id(peer: str):
     _id = ""

@@ -62,20 +62,21 @@ def votes():
             for vote in votes:
                 vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
                 if not finalized_elections[vote['election_id']]:
-                    winners = utils.isElecFinal(election_id=vote['election_id'], eround=int(vote['round']))
+                    winners, total_votes = utils.isElecFinal(election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
+
                     if len(winners) == 1:
                         finalized_elections[vote['election_id']] = True
                         if winners[0][0] == env("CORE_PEER_ID") and winners[0][1] > (len(utils.get_voting_peers()) + 1) / 2:
                             print("MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), vote['election_id']))
                             utils.claim_executor(election_id=vote['election_id'], eround=int(vote['round']), votes=winners[0][1], core_id=env("CORE_PEER_ID"))
                     else:
-                        utils.finalize_round(election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
                         candidates = []
                         for winner in winners:
                             if winner[0] != env("CORE_PEER_ID"):
                                 candidates.append(winner[0])
                         candidate = candidates[random.randint(0, len(candidates) - 1)]
-                        if utils.is_round_finalized(election_id=vote['election_id'], eround=elections_rounds[vote['election_id']]):
+
+                        if total_votes == (len(utils.get_voting_peers()) + 1) and total_votes != 0:
                             elections_rounds[vote['election_id']] += 1
                             print('MALCONVOTE: Peer {} voted successfully on candidate {} in election {} round {}'.format(env("CORE_PEER_ID"), candidate, vote['election_id'], str(elections_rounds[vote['election_id']])))
                             utils.send_vote(candidate=candidate, election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
