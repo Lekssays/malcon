@@ -100,7 +100,6 @@ services:
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org1.example.com:9443
     - CORE_PEER_ENDPOINT=peer0.org1.example.com:10010
-    - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11010
     ports:
     - 7051:7051
@@ -130,7 +129,6 @@ services:
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org1.example.com:9443
     - CORE_PEER_ENDPOINT=peer1.org1.example.com:10011
-    - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11011
     - CORE_PEER_NEIGHBORS=peer1.org2.example.com
     ports:
@@ -160,7 +158,6 @@ services:
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org2.example.com:9443
     - CORE_PEER_ENDPOINT=peer0.org2.example.com:10020
-    - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11020
     ports:
     - 8051:7051
@@ -219,7 +216,6 @@ services:
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org3.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org3.example.com:9443
     - CORE_PEER_ENDPOINT=peer0.org3.example.com:10030
-    - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11030
     ports:
     - 9051:7051
@@ -249,7 +245,6 @@ services:
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org3.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org3.example.com:9443
     - CORE_PEER_ENDPOINT=peer1.org3.example.com:10031
-    - CORE_PEER_PORT=5000
     - CORE_PEER_REDIS_PORT=11031
     - CORE_PEER_NEIGHBORS=None
     ports:
