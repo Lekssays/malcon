@@ -18,7 +18,7 @@ from iota import Tag
 from iota import TryteString
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
-API = Iota(ENDPOINT, testnet = True)
+API = Iota(ENDPOINT, testnet = True, local_pow = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
@@ -43,8 +43,9 @@ def get_peers():
     peers = set()
     tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     for peer in tx_peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        peers.add(peer['core_id'])
+        if peer.timestamp >= 1609455600:
+            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
+            peers.add(peer['core_id'])
     return list(peers)
 
 def store_token(token: str, election_id: str):
@@ -69,7 +70,7 @@ def get_target_peer(election_id: str):
     target_peer = ""
     for election in elections:
         # New version of the election object
-        if election.timestamp >= 1607522400:
+        if election.timestamp >= 1609455600:
             election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
             if election_id == election['election_id']:
                 target_peer = election['target']
@@ -77,9 +78,10 @@ def get_target_peer(election_id: str):
 
     peers = get_transactions_by_tag(get_tag("TARPEER"), hashes=[], returnAll=True)
     for peer in peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        if peer['core_id'] == target_peer:
-            return peer
+        if peer.timestamp >= 1609455600:
+            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
+            if peer['core_id'] == target_peer:
+                return peer
 
 def current_tokens(election_id: str):
     return len(get_tokens(election_id=election_id))

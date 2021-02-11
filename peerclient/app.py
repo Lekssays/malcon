@@ -19,7 +19,11 @@ env.read_env()
 
 @app.route('/', methods=['GET'])
 def home():
-    return "Welcome to MALCON peer client <b>{}</b>!".format(env("CORE_PEER_PORT"))
+    return {
+        "message": "success",
+        "type": "client",
+        "peer_id": env("CORE_PEER_ID")
+    }, 200
 
 @app.route('/tokens', methods=['POST'])
 def receive_tokens():

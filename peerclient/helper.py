@@ -19,7 +19,7 @@ from iota import Tag
 from iota import TryteString
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
-API = Iota(ENDPOINT, testnet = True)
+API = Iota(ENDPOINT, testnet = True, local_pow = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
@@ -104,8 +104,9 @@ def verify_token(token: str, signature: float, public_key: str):
 def store_peers():
     tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     for peer in tx_peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        r.sadd("peers", str(peer['core_id']))
+        if peer.timestamp >= 1609455600:
+            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
+            r.sadd("peers", str(peer['core_id']))
 
 def validate_tokens(tokens: list):
     npeers = len(r.smembers("peers"))
@@ -147,8 +148,9 @@ def execute_strategies(strategies: list, ports: list, path: str):
 def store_strategies():
     tx_strategies = get_transactions_by_tag(tag=get_tag("STRA"), hashes=[], returnAll=True)
     for strategy in tx_strategies:
-        strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
-        r.sadd("strategies", str({"name": strategy['name'], "commands": strategy['commands']}))
+        if strategy.timestamp >= 1609455600:
+            strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
+            r.sadd("strategies", str({"name": strategy['name'], "commands": strategy['commands']}))
 
 def broadcast_execution(strategies: list, issuer: str, election_id: str, command: str):
     execution = {
@@ -173,7 +175,7 @@ def register_target_peer():
 def get_election(election_id: str):
     tx_elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
     for election in tx_elections:
-        if election.timestamp >= 1607519000:
+        if election.timestamp >= 1609455600:
             election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
             if election['election_id'] == election_id:
                 return election

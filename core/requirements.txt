@@ -3,3 +3,4 @@ urllib3
 pyota[ccurl,pow]
 flask
 environs
+argparse

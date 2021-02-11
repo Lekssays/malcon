@@ -15,7 +15,11 @@ peers_count = len(helper.get_peers())
 
 @app.route('/', methods=['GET'])
 def home():
-    return "Welcome to MALCON admin client for <b>{}</b>!".format(env("CORE_PEER_ID"))
+    return {
+        "message": "success",
+        "type": "admin",
+        "peer_id": env("CORE_PEER_ID")
+    }, 200
 
 @app.route('/tokens', methods=['POST'])
 def receive_tokens():

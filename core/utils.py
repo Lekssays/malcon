@@ -22,7 +22,7 @@ from iota import TryteString
 from models import Vote, Peer, Request, Executor, Strategy
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
-API = Iota(ENDPOINT, testnet = True)
+API = Iota(ENDPOINT, testnet = True, local_pow = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
@@ -142,10 +142,11 @@ def get_peer_endpoint(peer: str):
 def store_voting_peers(origin: str):
     peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
     for peer in peers:
-        peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-        if peer['core_id'] != origin:
-            r.sadd('voting_peers', str(peer))
-            r.sadd('endpoints', str(peer['endpoint']))
+        if peer.timestamp >= 1609455600:
+            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
+            if peer['core_id'] != origin:
+                r.sadd('voting_peers', str(peer))
+                r.sadd('endpoints', str(peer['endpoint']))
 
 def get_voting_peers():
     voters = list(r.smembers('voting_peers'))
@@ -183,9 +184,10 @@ def get_votes(election_id: str, address: str, eround: int):
     votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
     for vote in votes:
-        vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-        if election_id == vote['election_id'] and eround == int(vote['round']):
-            leaderboard[vote['candidate']] += 1
+        if vote.timestamp >= 1609455600:
+            vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
+            if election_id == vote['election_id'] and eround == int(vote['round']):
+                leaderboard[vote['candidate']] += 1
     return leaderboard[address]
 
 def verify_executor(election_id: str, executor: str, eround: int, votes_count: int):
@@ -193,9 +195,10 @@ def verify_executor(election_id: str, executor: str, eround: int, votes_count: i
     leaderboard = defaultdict(lambda : 0)
     
     for vote in votes:
-        vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-        if election_id == vote['election_id'] and eround == int(vote['round']):
-            leaderboard[vote['candidate']] += 1
+        if vote.timestamp >= 1609455600:
+            vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
+            if election_id == vote['election_id'] and eround == int(vote['round']):
+                leaderboard[vote['candidate']] += 1
 
     winner = max(leaderboard.items(), key=lambda a: a[1])
     if executor == winner[0] and votes_count == winner[1]:
@@ -239,9 +242,10 @@ def isElecFinal(election_id: str, eround: int):
     votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
     for vote in votes:
-        vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-        if election_id == vote['election_id'] and eround == int(vote['round']):
-            leaderboard[vote['candidate']] += 1
+        if vote.timestamp >= 1609455600:
+            vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
+            if election_id == vote['election_id'] and eround == int(vote['round']):
+                leaderboard[vote['candidate']] += 1
     
     max_votes = max(leaderboard.values())
     total_votes = 0
