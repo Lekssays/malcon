@@ -34,11 +34,12 @@ def main():
 
     for org in range(1, orgs + 1):
         for peer in range(0, peers):
-            endpoint = "peer{}.org{}.example.com".format(str(peer), str(org))
+            peer_id = "peer{}.org{}.example.com".format(str(peer), str(org))
+            endpoint = "http://0.0.0.0:100{}{}".format(str(org), str(peer))
             if check(endpoint):
-                print(endpoint + " SUCCESS")
+                print(peer_id + " SUCCESS")
             else:
-                print(endpoint + " FAILED")
+                print(peer_id + " FAILED")
 
 if __name__ == '__main__':
     main()
