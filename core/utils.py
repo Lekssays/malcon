@@ -313,7 +313,7 @@ def add_strategy(name: str, commands: str, isFinal: bool, system: str):
     strategy.isFinal = isFinal
     strategy.system = system
     address, message = build_transaction(payload=strategy.get())
-    return send_transaction(address=address, message=message, tag=get_tag("STRA"))
+    return send_transaction(address=address, message=message, tag=get_tag("STRATEGIES"))
 
 def get_neighbors():
     neighbors = env("CORE_PEER_NEIGHBORS")

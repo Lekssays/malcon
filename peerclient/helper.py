@@ -146,7 +146,7 @@ def execute_strategies(strategies: list, ports: list, path: str):
     return final_command
 
 def store_strategies():
-    tx_strategies = get_transactions_by_tag(tag=get_tag("STRA"), hashes=[], returnAll=True)
+    tx_strategies = get_transactions_by_tag(tag=get_tag("STRATEGIES"), hashes=[], returnAll=True)
     for strategy in tx_strategies:
         if strategy.timestamp >= 1609455600:
             strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
