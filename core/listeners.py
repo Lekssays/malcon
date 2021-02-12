@@ -134,6 +134,6 @@ def broadcasts():
         executions = utils.get_transactions_by_tag(tag=get_tag("EXECUTION"), hashes=hashes, returnAll=False)
         for execution in executions:
             if execution.timestamp >= 1609455600:
-                execution = json.loads(execution.signature_message_fragment.decode().replace("\'", "\""))
+                execution = json.loads(execution.signature_message_fragment.decode())
                 print("MALCONEXECUTION: ", execution)
         time.sleep(TIME)

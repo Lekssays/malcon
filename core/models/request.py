@@ -4,7 +4,7 @@ import math
 import json
 
 class Request:
-    def __init__(self, tx_id = "", timestamp = str(math.floor(datetime.datetime.now().timestamp())), issuer = "", election_id = ""):
+    def __init__(self, tx_id = "", timestamp = math.floor(datetime.datetime.now().timestamp()), issuer = "", election_id = ""):
         self.tx_id = tx_id
         self.timestamp = timestamp
         self.issuer = issuer

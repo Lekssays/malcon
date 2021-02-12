@@ -4,7 +4,7 @@ import math
 import json
 
 class Vote:
-    def __init__(self, voter = "", candidate = "", election_id = "", eround = 1, timestamp = str(math.floor(datetime.datetime.now().timestamp()))):
+    def __init__(self, voter = "", candidate = "", election_id = "", eround = 1, timestamp = math.floor(datetime.datetime.now().timestamp())):
         self.voter = voter
         self.candidate = candidate
         self.election_id = election_id

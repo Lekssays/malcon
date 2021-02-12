@@ -4,7 +4,7 @@ import math
 import json
 
 class Peer:
-    def __init__(self, endpoint = "", public_key = "", core_id = "", address = "", timestamp = str(math.floor(datetime.datetime.now().timestamp()))):
+    def __init__(self, endpoint = "", public_key = "", core_id = "", address = "", timestamp = math.floor(datetime.datetime.now().timestamp())):
         self.endpoint = endpoint
         self.public_key = public_key
         self.core_id = core_id

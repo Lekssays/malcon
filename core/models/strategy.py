@@ -4,7 +4,7 @@ import math
 import json
 
 class Strategy:
-    def __init__(self, name = "", commands = "", isFinal = False, system = "", timestamp = str(math.floor(datetime.datetime.now().timestamp()))):
+    def __init__(self, name = "", commands = "", isFinal = False, system = "", timestamp = math.floor(datetime.datetime.now().timestamp())):
         self.name = name
         self.commands = commands
         self.isFinal = isFinal

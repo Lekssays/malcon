@@ -129,7 +129,6 @@ def execute_command(command: str):
 def execute_strategies(strategies: list, ports: list, path: str):
     local_strategies = list(r.smembers("strategies"))
     commands = []
-    print(list(map(lambda x: x.decode(), local_strategies)))
     for strategy in local_strategies:
         strategy = json.loads(strategy)
         if strategy['name'] in strategies:
@@ -149,7 +148,7 @@ def store_strategies():
     tx_strategies = get_transactions_by_tag(tag=get_tag("STRATEGIES"), hashes=[], returnAll=True)
     for strategy in tx_strategies:
         if strategy.timestamp >= 1609455600:
-            strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
+            strategy = json.loads(strategy.signature_message_fragment.decode())
             strategy_json = json.dumps({'name': strategy['name'], 'commands': strategy['commands']})
             r.sadd("strategies", strategy_json)
 
@@ -158,7 +157,8 @@ def broadcast_execution(strategies: list, issuer: str, election_id: str, command
         "election_id": election_id,
         "strategies": strategies,
         "issuer": issuer,
-        "command": command
+        "command": command,
+        "timestamp": math.floor(datetime.datetime.now().timestamp())
     }
     address, message = build_transaction(payload=json.dumps(execution))
     return send_transaction(address=address, message=message, tag=get_tag("EXECUTION"))
