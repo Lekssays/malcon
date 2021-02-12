@@ -13,3 +13,5 @@ address.txt
 helper.txt
 .DS_Store
 peerclient/kitkat.dark.mal
+.vscode/
+*.tar

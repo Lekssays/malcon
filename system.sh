@@ -278,6 +278,23 @@ function queryChainecode() {
   fi
 }
 
+function populate() {
+  echo "${PWD}"
+  echo "Create peer peer1.org1.example.com"
+  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreatePeer","Args":["peer1.org1.example.com", "[\"peer2.org1.example.com\"]", "1606834745", "PID_000001", "true", "true", "true"]}'
+
+  sleep 3
+
+  echo "Create peer peer1.org2.example.com"
+  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreatePeer","Args":["peer1.org2.example.com", "[\"peer1.org1.example.com\"]", "1606834745", "PID_000001", "false", "true", "true"]}'
+
+  sleep 3
+
+  echo "Create malware MAL_000004"
+  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n malware  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreateMalware","Args":["MAL_000004", "kitkat.dark.mal", "/client/kitkat.dark.mal", "bot", "4e4d6c332b6fe62a63afe56171fd3725", "1606834745", "peer1.org1.example.com", "false", "[\"M\"]", "[1337]"]}'
+
+}
+
 if [[ $# -lt 1 ]] ; then
   printHelp
   exit 0
@@ -311,8 +328,8 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "monitor" ]; then
   monitorNetwork
 elif [ "${MODE}" == "deployCC" ]; then
-  # deployChaincode "malware"
-  # sleep 2
+  deployChaincode "malware"
+  sleep 2
   deployChaincode "peer"
 elif [ "${MODE}" == "invokeCC" ]; then
   invokeChaincode "malware"
@@ -354,6 +371,10 @@ elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
 elif [ "${MODE}" == "deployW" ]; then
   deployWebServer
+elif [ "${MODE}" == "populate" ]; then
+  populate
+elif [ "${MODE}" == "runEndpoints" ]; then
+  runEndpoints
 else
   printHelp
   exit 1

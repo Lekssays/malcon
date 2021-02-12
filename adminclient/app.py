@@ -31,13 +31,13 @@ def receive_tokens():
             target_peer = helper.get_target_peer(election_id=data['election_id'])
             output = helper.execute_strategy(peer=target_peer, election_id=data['election_id'])
             return {
-                'message': output
+                "message": output
             }, 200
         return {
-            'message': 'token received!'
+            "message": 'token received!'
         }, 200
     return {
-        'message': 'failure' 
+        "message": 'failure' 
     }, 400
 
 app.run(host='0.0.0.0', port=env.int("CORE_PEER_PORT"))

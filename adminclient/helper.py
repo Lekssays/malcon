@@ -18,7 +18,7 @@ from iota import Tag
 from iota import TryteString
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
-API = Iota(ENDPOINT, testnet = True, local_pow = True)
+API = Iota(ENDPOINT, testnet = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
@@ -65,33 +65,28 @@ def prepare_payload(election_id: str):
     }
     return json.dumps(payload)
 
-def get_target_peer(election_id: str):
+def get_target_peer(election_id: str) -> str:
     elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
     target_peer = ""
     for election in elections:
-        # New version of the election object
         if election.timestamp >= 1609455600:
             election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
             if election_id == election['election_id']:
-                target_peer = election['target']
-                break
+                return election['target']
 
-    peers = get_transactions_by_tag(get_tag("TARPEER"), hashes=[], returnAll=True)
-    for peer in peers:
-        if peer.timestamp >= 1609455600:
-            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-            if peer['core_id'] == target_peer:
-                return peer
-
-def current_tokens(election_id: str):
+def current_tokens(election_id: str) -> int:
     return len(get_tokens(election_id=election_id))
 
-def get_peer_endpoint(peer: dict):
-    if env("CORE_PEER_PORT"):
-        return "http://" + peer['core_id'] + ":" + env("CORE_PEER_PORT")
-    return "http://" + peer['endpoint']
+def get_peer_endpoint(peer: str) -> str:
+    # TODO: Make this more modular. It will fail if the peers are more than 10 per organization.
+    endpoint = "http://" + peer + ":100"
+    digits = ""
+    for c in peer:
+        if c.isdigit():
+            digits += c
+    return endpoint + digits[::-1]
 
-def execute_strategy(peer: dict, election_id: str):
+def execute_strategy(peer: str, election_id: str):
     payload = prepare_payload(election_id=election_id)
     http = urllib3.PoolManager()
     endpoint = get_peer_endpoint(peer=peer)

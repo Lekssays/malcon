@@ -41,7 +41,7 @@ def receive_tokens():
     election = helper.get_election(election_id=data['election_id'])
     if areValid:
         final_command = helper.execute_strategies(strategies=election['strategies'], ports=election['ports'], path=election['path'])
-        execution_tx = helper.broadcast_execution(strategies=election['strategies'], issuer=data['issuer'], election_id=data['election_id'], command=final_command)
+        execution_tx = helper.broadcast_execution(strategies=election['strategies'], issuer=data['issuer'], election_id=data['election_id'], command=final_command)        
         return {
             "message": "initialized strategies execution!",
             "broadcast_tx": str(execution_tx),
@@ -51,7 +51,7 @@ def receive_tokens():
         }, 200
 
     return {
-        'message': 'invalid tokens!'
+        "message": "invalid tokens!"
     }
 
 try:
