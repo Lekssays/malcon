@@ -77,19 +77,24 @@ def get_target_peer(election_id: str) -> str:
 def current_tokens(election_id: str) -> int:
     return len(get_tokens(election_id=election_id))
 
-def get_peer_endpoint(peer: str) -> str:
-    # TODO: Make this more modular. It will fail if the peers are more than 10 per organization.
-    endpoint = "http://" + peer + ":100"
-    digits = ""
-    for c in peer:
-        if c.isdigit():
-            digits += c
-    return endpoint + digits[::-1]
+def get_peer_endpoint(peer: str, internal: bool) -> str:
+    # NOTE: the inter-container communication will use the original port 
+    # where the container serves the app client 5000 and not the exposed port e.g. 10011
+    if internal:
+        return "http://" + peer + ":5000"
+    else:
+        endpoint = "http://" + peer + ":100"
+        digits = ""
+        for c in peer:
+            if c.isdigit():
+                digits += c
+        return endpoint + digits[::-1]
 
 def execute_strategy(peer: str, election_id: str):
     payload = prepare_payload(election_id=election_id)
     http = urllib3.PoolManager()
-    endpoint = get_peer_endpoint(peer=peer)
+    # NOTE: Change internal to False if you are deploying in a prod env.
+    endpoint = get_peer_endpoint(peer=peer, internal=True)
     response = http.request(
         'POST', endpoint + "/tokens",
         headers={'Content-Type': 'application/json'},

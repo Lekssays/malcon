@@ -129,9 +129,9 @@ def execute_command(command: str):
 def execute_strategies(strategies: list, ports: list, path: str):
     local_strategies = list(r.smembers("strategies"))
     commands = []
+    print(list(map(lambda x: x.decode(), local_strategies)))
     for strategy in local_strategies:
-        print(strategy.decode())
-        strategy = json.loads(strategy.decode().replace("\'", "\""))
+        strategy = json.loads(strategy)
         if strategy['name'] in strategies:
             if strategy['name'] == "CP":
                 for port in ports:
@@ -150,7 +150,8 @@ def store_strategies():
     for strategy in tx_strategies:
         if strategy.timestamp >= 1609455600:
             strategy = json.loads(strategy.signature_message_fragment.decode().replace("\'", "\""))
-            r.sadd("strategies", str({"name": strategy['name'], "commands": strategy['commands']}))
+            strategy_json = json.dumps({'name': strategy['name'], 'commands': strategy['commands']})
+            r.sadd("strategies", strategy_json)
 
 def broadcast_execution(strategies: list, issuer: str, election_id: str, command: str):
     execution = {
