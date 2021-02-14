@@ -58,11 +58,6 @@ def get_address():
 
 MYADDRESS = get_address()
 
-def get_transactions_hashes_by_tag(tag: str):
-    results = API.find_transactions(tags=[tag])
-    hashes = map(lambda x: str(x), results['hashes'])
-    return hashes
-
 def get_transactions_by_tag(tag: str, hashes: list, returnAll: bool):
     results = API.find_transaction_objects(tags=[tag])
     if returnAll:
@@ -130,12 +125,6 @@ def get_votes(election_id: str, eround: int):
     votes = r.smembers("votes_" + election_id + "_" + str(eround))
     return list(map(lambda x: json.loads(x.decode()), votes))
 
-def store_hash(label: str, txhash: str):
-    r.sadd(label + "_hashes", str(txhash))
-
-def ismember(label: str, txhash: str):
-    return r.sismember(label, txhash)
-
 def get_peer_endpoint(peer: str):
     if env("CORE_PEER_PORT"):
         return "http://" + peer + ":" + env("CORE_PEER_PORT")
@@ -189,7 +178,7 @@ def generate_token():
     return token, signature
 
 def verify_executor(election_id: str, executor: str, eround: int, votes_count: int):
-    votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
+    votes = get_votes(election_id=election_id, eround=eround)
     leaderboard = defaultdict(lambda : 0)
     
     for vote in votes:
@@ -232,9 +221,6 @@ def initiate_elec(election_id: str):
         r.sadd(election_id + "_init", 1)
         return True
     return False
-
-def get_current_votes(election_id: str):
-    return len(list(get_members_by_label(label="votes")))
 
 def is_elec_final(election_id: str, eround: int):
     votes = get_votes(election_id=election_id, eround=eround)
@@ -280,16 +266,6 @@ def broadcast_request(election_id: str):
     if count == len(peers):
         return True
     return False
-
-def get_members_by_label(label: str):
-    return map(lambda x: x.decode().replace("\'", "\""), r.smembers(label))
-
-def get_members_hashes_by_label(label: str):
-    return map(lambda x: x.decode(), r.smembers(label + "_hashes"))
-
-def synchronize_hashes(label: str, hashes: list):
-    for tx_hash in hashes:
-        store_hash(label=label, txhash=tx_hash)
 
 def load_strategies():
     strategies = []
