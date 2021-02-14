@@ -97,10 +97,10 @@ def read_transaction( tx_hash: str):
     message = message.decode()
     return json.loads(message)
 
-def send_request(tx_id: str, issuer: str, election_id: str):
+def send_request(tx_hash: str, election_id: str):
     request = Request()
-    request.tx_id = tx_id
-    request.issuer = MYADDRESS
+    request.tx_hash = tx_hash
+    request.issuer = env("CORE_PEER_ID")
     request.election_id = election_id
     address, message = build_transaction(payload=request.get())
     return send_transaction(address=address, message=message, tag=get_tag("REQ"))
@@ -122,6 +122,13 @@ def register_peer(endpoint: str, public_key: str, core_id: str, address: str):
     peer.address = address
     address, message = build_transaction(payload=peer.get())
     return send_transaction(address=address, message=message, tag=get_tag("PEER"))
+
+def store_vote(vote: dict, election_id: str, eround: int):
+    r.sadd("votes_" + election_id + "_" + str(eround), json.dumps(vote))
+
+def get_votes(election_id: str, eround: int):
+    votes = r.smembers("votes_" + election_id + "_" + str(eround))
+    return list(map(lambda x: json.loads(x.decode()), votes))
 
 def store_hash(label: str, txhash: str):
     r.sadd(label + "_hashes", str(txhash))
@@ -181,16 +188,6 @@ def generate_token():
     signature = pow(thash, privatekey.d, privatekey.n)
     return token, signature
 
-def get_votes(election_id: str, address: str, eround: int):
-    votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
-    leaderboard = defaultdict(lambda : 0)
-    for vote in votes:
-        if vote.timestamp >= 1609455600:
-            vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-            if election_id == vote['election_id'] and eround == int(vote['round']):
-                leaderboard[vote['candidate']] += 1
-    return leaderboard[address]
-
 def verify_executor(election_id: str, executor: str, eround: int, votes_count: int):
     votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
     leaderboard = defaultdict(lambda : 0)
@@ -230,7 +227,7 @@ def send_token(executor: str, election_id: str):
 def store_token(token: str, election_id: str):
     r.sadd(election_id + "_token", str(token))
 
-def initiateElec(election_id: str):
+def initiate_elec(election_id: str):
     if not r.exists(election_id + "_init"):
         r.sadd(election_id + "_init", 1)
         return True
@@ -239,14 +236,13 @@ def initiateElec(election_id: str):
 def get_current_votes(election_id: str):
     return len(list(get_members_by_label(label="votes")))
 
-def isElecFinal(election_id: str, eround: int):
-    votes = get_transactions_by_tag(tag=get_tag("VOTE"), hashes=[], returnAll=True)
+def is_elec_final(election_id: str, eround: int):
+    votes = get_votes(election_id=election_id, eround=eround)
     leaderboard = defaultdict(lambda : 0)
+    
     for vote in votes:
-        if vote.timestamp >= 1609455600:
-            vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-            if election_id == vote['election_id'] and eround == int(vote['round']):
-                leaderboard[vote['candidate']] += 1
+        if election_id == vote['election_id'] and eround == vote['round']:
+            leaderboard[vote['candidate']] += 1
     
     max_votes = max(leaderboard.values())
     total_votes = 0
@@ -256,10 +252,13 @@ def isElecFinal(election_id: str, eround: int):
         total_votes += leaderboard[candidate]
         if leaderboard[candidate] == max_votes:
             winners.append((candidate, max_votes))
+    
     print("MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes)))
+    
     if len(winners) == 1:
         if winners[0][1] > (len(get_voting_peers()) + 1) / 2:
             r.sadd(election_id, eround)
+    
     return winners, total_votes
 
 def get_peer_id(peer: str):
@@ -270,13 +269,10 @@ def get_peer_id(peer: str):
     return _id[::-1]
 
 def broadcast_request(election_id: str):
-    # TODO: In Prod, PORT 5000 shall be changed to the appropriate port of devices
     peers = get_voting_peers()
     count = 0
-    print(peers)
     for peer in peers:
         port = "110" + get_peer_id(peer=peer)
-        print(peer, port)
         rr = redis.Redis(host=peer, port=port)
         if not rr.exists(election_id + "_init"):
             rr.sadd(election_id + "_init", 1)
