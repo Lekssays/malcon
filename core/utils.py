@@ -8,6 +8,7 @@ import redis
 import subprocess
 import threading
 import urllib3
+import zmq
 
 from collections import defaultdict
 from Crypto.PublicKey import RSA
@@ -93,7 +94,7 @@ def build_transaction(payload: str):
 def read_transaction( tx_hash: str):
     bundle = API.get_bundles(tx_hash)
     message = bundle['bundles'][0].tail_transaction.signature_message_fragment
-    message = message.decode().replace("\'", "\"")
+    message = message.decode()
     return json.loads(message)
 
 def send_request(tx_id: str, issuer: str, election_id: str):
@@ -272,8 +273,10 @@ def broadcast_request(election_id: str):
     # TODO: In Prod, PORT 5000 shall be changed to the appropriate port of devices
     peers = get_voting_peers()
     count = 0
+    print(peers)
     for peer in peers:
         port = "110" + get_peer_id(peer=peer)
+        print(peer, port)
         rr = redis.Redis(host=peer, port=port)
         if not rr.exists(election_id + "_init"):
             rr.sadd(election_id + "_init", 1)
@@ -313,7 +316,7 @@ def add_strategy(name: str, commands: str, isFinal: bool, system: str):
     strategy.isFinal = isFinal
     strategy.system = system
     address, message = build_transaction(payload=strategy.get())
-    return send_transaction(address=address, message=message, tag=get_tag("STRATEGIES"))
+    return send_transaction(address=address, message=message, tag=get_tag("STRA"))
 
 def get_neighbors():
     neighbors = env("CORE_PEER_NEIGHBORS")
@@ -334,3 +337,21 @@ def execute_strategy(ports: list):
     execute = threading.Thread(target=execute_command, args=(final_command,))
     execute.start()
     return final_command
+
+def get_socket_connection():
+    context = zmq.Context()
+    socket = context.socket(zmq.SUB)
+    socket.connect('tcp://zmq.devnet.iota.org:5556')
+    socket.subscribe('tx')
+    return socket
+
+def get_tags() -> list:
+    resources = ["VOTE", "EXECUTION", "EXEC", "ELEC", "REQ", "EMERG"]
+    tags = []
+    for resource in resources:
+        tags.append(get_tag(resource=resource))
+    return tags
+
+def parse_tag(tag: str) -> str:
+    tag = tag.split("9")
+    return tag[0]

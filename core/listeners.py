@@ -6,6 +6,7 @@ import time
 import random
 import urllib3
 import utils
+import zmq
 
 from collections import defaultdict
 from environs import Env
@@ -18,22 +19,21 @@ def get_tag(resource: str):
     return "MALCON" + resource.upper() + env("VERSION")
 
 def elections():
+    socket = utils.get_socket_connection()
     print("Listening on MALCONELEC tag...")
     while True:
-        hashes = list(set(utils.get_transactions_hashes_by_tag(tag=get_tag("ELEC"))) ^ set(utils.get_members_hashes_by_label(label="processed")))
-        utils.synchronize_hashes(hashes=hashes, label="processed")
-        elections = utils.get_transactions_by_tag(tag=get_tag("ELEC"), hashes=hashes, returnAll=False)
-        for election in elections:
-            tx_hash = str(election.hash)
-            if election.timestamp >= 1609455600:
-                election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
-                response = utils.broadcast_request(election_id=election['election_id'])
-                if response:
-                    print("MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id']))
-                    isInitiated = utils.initiateElec(election_id=election['election_id'])
-                    if isInitiated:
-                        print("MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id']))
-                        utils.send_request(tx_id=tx_hash, issuer=utils.MYADDRESS, election_id=election['election_id'])
+        message = socket.recv()
+        data = message.split()
+        tx_hash = data[1].decode()
+        if utils.parse_tag(tag=data[12].decode()) == utils.get_tag(resource="ELEC"):
+            election = utils.read_transaction(tx_hash=tx_hash)
+            response = utils.broadcast_request(election_id=election['election_id'])
+            if response:
+                print("MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id']))
+                isInitiated = utils.initiateElec(election_id=election['election_id'])
+                if isInitiated:
+                    print("MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id']))
+                    utils.send_request(tx_id=tx_hash, issuer=utils.MYADDRESS, election_id=election['election_id'])
         time.sleep(TIME)
 
 def requests():
@@ -134,6 +134,6 @@ def broadcasts():
         executions = utils.get_transactions_by_tag(tag=get_tag("EXECUTION"), hashes=hashes, returnAll=False)
         for execution in executions:
             if execution.timestamp >= 1609455600:
-                execution = json.loads(execution.signature_message_fragment.decode())
+                execution = json.loads(execution.signature_message_fragment.decode().replace("\'", "\""))
                 print("MALCONEXECUTION: ", execution)
         time.sleep(TIME)
