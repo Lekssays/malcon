@@ -348,9 +348,11 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "restart" ]; then
   restartNetwork
   sleep 2
-  python3 ./test/generator.py -o 10 -p 10
+  python3 ./test/generator.py -o $ORGS -p $PEERS
   sleep 2
   cp ./tests/docker_compose_test.yml ./network/docker_compose.yml 
+  cp ./tests/peers_ports.json ./adminclient/peers_ports.json
+  cp ./tests/peers_ports.json ./peerclient/peers_ports.json
   sleep 3
   generateBlocks
   sleep 2
