@@ -1,0 +1,26 @@
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:2.0
+    tty: true
+    environment:
+    - GOPATH=/opt/gopath
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - FABRIC_LOGGING_SPEC=INFO
+    - CORE_PEER_ID=cli
+    - CORE_CHAINCODE_KEEPALIVE=10
+    # TLS
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+    - CORE_PEER_MSPCONFIGPATH=/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    command: /bin/bash
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./../chaincodes/malwarecc:/opt/gopath/src/malcon/chaincodes/malwarecc
+    - ./../chaincodes/pubkeycc:/opt/gopath/src/malcon/chaincodes/pubkeycc
+    - ./../chaincodes/strategycc:/opt/gopath/src/malcon/chaincodes/strategycc
+    - ./../:/opt/gopath/src/malcon/
+    networks:
+    - basic
+    depends_on:

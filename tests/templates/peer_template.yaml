@@ -1,0 +1,28 @@
+  core_id:
+    container_name: core_id
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=core_id
+    - CORE_PEER_LOCALMSPID=org_msp
+    - CORE_PEER_ADDRESS=core_id:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=core_id:7051
+    - CORE_OPERATIONS_LISTENADDRESS=core_id:9443
+    - CORE_PEER_ENDPOINT=core_id:web_port
+    - CORE_PEER_REDIS_PORT=redis_port
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - gossip_port:7051
+    - operations_port:9443
+    - web_port:5000
+    - redis_port:redis_port
+    volumes:
+    - ./crypto-config/peerOrganizations/org_id.example.com/peers/core_id/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org_id.example.com/peers/core_id/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org_id.example.com/users:/etc/hyperledger/users
+    - ./../client_path/:/client
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic

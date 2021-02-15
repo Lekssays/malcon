@@ -458,6 +458,7 @@ vm:
         # (Config) for Docker. For more info,
         # https://docs.docker.com/engine/admin/logging/overview/
         # Note: Set LogConfig using Environment Variables is not supported.
+        # 1 GB = 1073741824
         hostConfig:
             NetworkMode: host
             Dns:
@@ -467,7 +468,7 @@ vm:
                 Config:
                     max-size: "50m"
                     max-file: "5"
-            Memory: 8589934592
+            Memory: 536870912
 
 ###############################################################################
 #

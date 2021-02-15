@@ -340,6 +340,286 @@ Organizations:
         AnchorPeers:
             - Host: peer0.org5.example.com
               Port: 1551
+              
+    - &Org6
+        # Name is the key by which this org will be referenced in channel
+        # configuration transactions.
+        # Name can include alphanumeric characters as well as dots and dashes.
+        Name: Org6MSP
+
+        # SkipAsForeign can be set to true for org definitions which are to be
+        # inherited from the orderer system channel during channel creation.  This
+        # is especially useful when an admin of a single org without access to the
+        # MSP directories of the other orgs wishes to create a channel.  Note
+        # this property must always be set to false for orgs included in block
+        # creation.
+        SkipAsForeign: false
+
+        # ID is the key by which this org's MSP definition will be referenced.
+        # ID can include alphanumeric characters as well as dots and dashes.
+        ID: Org6MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration.
+        MSPDir: ./../crypto-config/peerOrganizations/org6.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies: &Org6Policies
+            Readers:
+                Type: Signature
+                Rule: "OR('Org6MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org6MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org6MSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('Org6MSP.member')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - orderer.example.com:7050
+
+        # AnchorPeers defines the location of peers which can be used for
+        # cross-org gossip communication. Note, this value is only encoded in
+        # the genesis block in the Application section context.
+        AnchorPeers:
+            - Host: peer0.org6.example.com
+              Port: 1651
+
+    - &Org7
+        # Name is the key by which this org will be referenced in channel
+        # configuration transactions.
+        # Name can include alphanumeric characters as well as dots and dashes.
+        Name: Org7MSP
+
+        # SkipAsForeign can be set to true for org definitions which are to be
+        # inherited from the orderer system channel during channel creation.  This
+        # is especially useful when an admin of a single org without access to the
+        # MSP directories of the other orgs wishes to create a channel.  Note
+        # this property must always be set to false for orgs included in block
+        # creation.
+        SkipAsForeign: false
+
+        # ID is the key by which this org's MSP definition will be referenced.
+        # ID can include alphanumeric characters as well as dots and dashes.
+        ID: Org7MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration.
+        MSPDir: ./../crypto-config/peerOrganizations/org7.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies: &Org7Policies
+            Readers:
+                Type: Signature
+                Rule: "OR('Org7MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org7MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org7MSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('Org7MSP.member')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - orderer.example.com:7050
+
+        # AnchorPeers defines the location of peers which can be used for
+        # cross-org gossip communication. Note, this value is only encoded in
+        # the genesis block in the Application section context.
+        AnchorPeers:
+            - Host: peer0.org7.example.com
+              Port: 1751
+
+    - &Org8
+        # Name is the key by which this org will be referenced in channel
+        # configuration transactions.
+        # Name can include alphanumeric characters as well as dots and dashes.
+        Name: Org8MSP
+
+        # SkipAsForeign can be set to true for org definitions which are to be
+        # inherited from the orderer system channel during channel creation.  This
+        # is especially useful when an admin of a single org without access to the
+        # MSP directories of the other orgs wishes to create a channel.  Note
+        # this property must always be set to false for orgs included in block
+        # creation.
+        SkipAsForeign: false
+
+        # ID is the key by which this org's MSP definition will be referenced.
+        # ID can include alphanumeric characters as well as dots and dashes.
+        ID: Org8MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration.
+        MSPDir: ./../crypto-config/peerOrganizations/org8.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies: &Org8Policies
+            Readers:
+                Type: Signature
+                Rule: "OR('Org8MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org8MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org8MSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('Org8MSP.member')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - orderer.example.com:7050
+
+        # AnchorPeers defines the location of peers which can be used for
+        # cross-org gossip communication. Note, this value is only encoded in
+        # the genesis block in the Application section context.
+        AnchorPeers:
+            - Host: peer0.org8.example.com
+              Port: 1851
+
+    - &Org9
+        # Name is the key by which this org will be referenced in channel
+        # configuration transactions.
+        # Name can include alphanumeric characters as well as dots and dashes.
+        Name: Org9MSP
+
+        # SkipAsForeign can be set to true for org definitions which are to be
+        # inherited from the orderer system channel during channel creation.  This
+        # is especially useful when an admin of a single org without access to the
+        # MSP directories of the other orgs wishes to create a channel.  Note
+        # this property must always be set to false for orgs included in block
+        # creation.
+        SkipAsForeign: false
+
+        # ID is the key by which this org's MSP definition will be referenced.
+        # ID can include alphanumeric characters as well as dots and dashes.
+        ID: Org9MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration.
+        MSPDir: ./../crypto-config/peerOrganizations/org9.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies: &Org9Policies
+            Readers:
+                Type: Signature
+                Rule: "OR('Org9MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org9MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org9MSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('Org9MSP.member')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - orderer.example.com:7050
+
+        # AnchorPeers defines the location of peers which can be used for
+        # cross-org gossip communication. Note, this value is only encoded in
+        # the genesis block in the Application section context.
+        AnchorPeers:
+            - Host: peer0.org9.example.com
+              Port: 1951
+
+    - &Org10
+        # Name is the key by which this org will be referenced in channel
+        # configuration transactions.
+        # Name can include alphanumeric characters as well as dots and dashes.
+        Name: Org10MSP
+
+        # SkipAsForeign can be set to true for org definitions which are to be
+        # inherited from the orderer system channel during channel creation.  This
+        # is especially useful when an admin of a single org without access to the
+        # MSP directories of the other orgs wishes to create a channel.  Note
+        # this property must always be set to false for orgs included in block
+        # creation.
+        SkipAsForeign: false
+
+        # ID is the key by which this org's MSP definition will be referenced.
+        # ID can include alphanumeric characters as well as dots and dashes.
+        ID: Org10MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration.
+        MSPDir: ./../crypto-config/peerOrganizations/org10.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies: &Org10Policies
+            Readers:
+                Type: Signature
+                Rule: "OR('Org10MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org10MSP.member')"
+                # If your MSP is configured with the new NodeOUs, you might
+                # want to use a more specific rule like the following:
+                # Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org10MSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('Org10MSP.member')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - orderer.example.com:7050
+
+        # AnchorPeers defines the location of peers which can be used for
+        # cross-org gossip communication. Note, this value is only encoded in
+        # the genesis block in the Application section context.
+        AnchorPeers:
+            - Host: peer0.org10.example.com
+              Port: 1051
 
 ################################################################################
 #
@@ -695,6 +975,32 @@ Channel: &ChannelDefaults
 #
 ################################################################################
 Profiles:
+    ThreeOrgsOrdererGenesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                - *Org1
+                - *Org2
+                - *Org3
+    
+    ThreeOrgsChannel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org2
+                - *Org3
+            Capabilities:
+                <<: *ApplicationCapabilities
 
     FiveOrgsOrdererGenesis:
         <<: *ChannelDefaults
@@ -724,5 +1030,46 @@ Profiles:
                 - *Org3
                 - *Org4
                 - *Org5
+            Capabilities:
+                <<: *ApplicationCapabilities
+
+    TenOrgsOrdererGenesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                - *Org1
+                - *Org2
+                - *Org3
+                - *Org4
+                - *Org5
+                - *Org6
+                - *Org7
+                - *Org8
+                - *Org9
+                - *Org10
+   
+    TenOrgsChannel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org2
+                - *Org3
+                - *Org4
+                - *Org5
+                - *Org6
+                - *Org7
+                - *Org8
+                - *Org9
+                - *Org10
             Capabilities:
                 <<: *ApplicationCapabilities

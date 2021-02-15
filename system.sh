@@ -14,6 +14,10 @@ export FABRIC_CFG_PATH=$PROJECT_DIRECTORY/network/config/
 export CCVERSION=1.0
 export CHANNEL_NAME=mychannel
 
+# TODO: CHANGE THIS
+ORGS=10
+PEERS=10
+
 script_path=`dirname "$0"`
 
 if [ ! -d "$script_path/chaincodes" ]; then
@@ -106,20 +110,20 @@ function checkNetworkStatus() {
 }
 
 function installDependencies() {
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
-    for peerId in 0 1
+    for peerId in $(seq $PEERS);
     do
       echo "Installing dependencies on peer$peerId.org$orgId.example.com"
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt"
     done
   done  
 }
 
 function configureRedis() {
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
-    for peerId in 0 1
+    for peerId in $(seq $PEERS);
     do
       echo "Configuring redis on peer$peerId.org$orgId.example.com"
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf"
@@ -128,9 +132,9 @@ function configureRedis() {
 }
 
 function generateKeys() {
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
-    for peerId in 0 1
+    for peerId in $(seq $PEERS);
     do
       echo "Generating keys on peer$peerId.org$orgId.example.com..."
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "/bin/sh /core/generate_keypair.sh &"
@@ -139,9 +143,9 @@ function generateKeys() {
 }
 
 function runEndpoints() {
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
-    for peerId in 0 1
+    for peerId in $(seq $PEERS);
     do
       echo "Running endpoint on peer$peerId.org$orgId.example.com..."
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py"
@@ -150,7 +154,7 @@ function runEndpoints() {
 }
 
 function runGateways() {
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
     echo "Running gateway on peer0.org$orgId.example.com..."
     docker exec -d peer0.org$orgId.example.com /bin/sh -c "python3 /core/gateway.py"  
@@ -164,7 +168,7 @@ function createChannel() {
   peer channel create -o $ORDERER_ADDRESS  --ordererTLSHostnameOverride $ORDERER_HOSTNAME -c $CHANNEL_NAME -f $PROJECT_DIRECTORY/network/config/$CHANNEL_NAME.tx --outputBlock $PROJECT_DIRECTORY/network/config/$CHANNEL_NAME.block --tls true --cafile $ORDERER_CA
 
   echo "Joining peers to channel..."
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
       setVariables $orgId
       peer channel join -b $PROJECT_DIRECTORY/network/config/$CHANNEL_NAME.block 
@@ -216,7 +220,7 @@ function deployChaincode() {
   peer lifecycle chaincode package $1.tar.gz --path ./chaincodes/$1cc --lang golang --label ${1}_${CCVERSION}
   
   echo "Installing $1 chaincode on peers..."
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
       setVariables $orgId
       peer lifecycle chaincode install $1.tar.gz
@@ -230,7 +234,7 @@ function deployChaincode() {
   export CC_PACKAGE_ID=$CC_PACKAGE_ID
 
   echo "Approving $1 chaincode for Organizations..."
-  for orgId in 1 2 3 4 5
+  for orgId in $(seq $ORGS);
   do
     setVariables $orgId
     peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
@@ -344,6 +348,10 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "restart" ]; then
   restartNetwork
   sleep 2
+  python3 ./test/generator.py -o 10 -p 10
+  sleep 2
+  cp ./tests/docker_compose_test.yml ./network/docker_compose.yml 
+  sleep 3
   generateBlocks
   sleep 2
   networkUp

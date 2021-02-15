@@ -16,3 +16,4 @@ peerclient/kitkat.dark.mal
 .vscode/
 *.tar
 test.py
+docker_compose_test.yml 
