@@ -73,10 +73,10 @@ function generateBlocks() {
   if test -f "$CHANNEL_NAME.tx"; then
       rm $CHANNEL_NAME.tx
   fi
-  configtxgen -outputBlock genesis.block -profile ThreeOrgsOrdererGenesis -channelID system-channel -configPath=.
+  configtxgen -outputBlock genesis.block -profile FiveOrgsOrdererGenesis -channelID system-channel -configPath=.
 
   echo "Generating channel block..."
-  configtxgen -profile ThreeOrgsChannel -outputCreateChannelTx $CHANNEL_NAME.tx -channelID $CHANNEL_NAME -configPath=.
+  configtxgen -profile FiveOrgsChannel -outputCreateChannelTx $CHANNEL_NAME.tx -channelID $CHANNEL_NAME -configPath=.
 }
 
 function networkUp() {
@@ -86,7 +86,7 @@ function networkUp() {
 
   #sleep 3
 
-  docker-compose -f docker-compose.yml up -d peer0.org1.example.com peer0.org2.example.com peer0.org3.example.com cli
+  docker-compose -f docker-compose.yml up -d peer0.org1.example.com peer0.org2.example.com peer0.org3.example.com peer0.org4.example.com peer0.org5.example.com cli
 
   #sleep 3
 
@@ -106,7 +106,7 @@ function checkNetworkStatus() {
 }
 
 function installDependencies() {
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
     for peerId in 0 1
     do
@@ -117,7 +117,7 @@ function installDependencies() {
 }
 
 function configureRedis() {
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
     for peerId in 0 1
     do
@@ -128,7 +128,7 @@ function configureRedis() {
 }
 
 function generateKeys() {
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
     for peerId in 0 1
     do
@@ -139,7 +139,7 @@ function generateKeys() {
 }
 
 function runEndpoints() {
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
     for peerId in 0 1
     do
@@ -150,7 +150,7 @@ function runEndpoints() {
 }
 
 function runGateways() {
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
     echo "Running gateway on peer0.org$orgId.example.com..."
     docker exec -d peer0.org$orgId.example.com /bin/sh -c "python3 /core/gateway.py"  
@@ -164,7 +164,7 @@ function createChannel() {
   peer channel create -o $ORDERER_ADDRESS  --ordererTLSHostnameOverride $ORDERER_HOSTNAME -c $CHANNEL_NAME -f $PROJECT_DIRECTORY/network/config/$CHANNEL_NAME.tx --outputBlock $PROJECT_DIRECTORY/network/config/$CHANNEL_NAME.block --tls true --cafile $ORDERER_CA
 
   echo "Joining peers to channel..."
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
       setVariables $orgId
       peer channel join -b $PROJECT_DIRECTORY/network/config/$CHANNEL_NAME.block 
@@ -216,7 +216,7 @@ function deployChaincode() {
   peer lifecycle chaincode package $1.tar.gz --path ./chaincodes/$1cc --lang golang --label ${1}_${CCVERSION}
   
   echo "Installing $1 chaincode on peers..."
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
       setVariables $orgId
       peer lifecycle chaincode install $1.tar.gz
@@ -230,7 +230,7 @@ function deployChaincode() {
   export CC_PACKAGE_ID=$CC_PACKAGE_ID
 
   echo "Approving $1 chaincode for Organizations..."
-  for orgId in 1 2 3
+  for orgId in 1 2 3 4 5
   do
     setVariables $orgId
     peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
