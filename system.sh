@@ -90,7 +90,7 @@ function networkUp() {
 
   #sleep 3
 
-  docker-compose -f docker-compose.yml up -d peer0.org1.example.com peer0.org2.example.com peer0.org3.example.com peer0.org4.example.com peer0.org5.example.com cli
+  docker-compose -f docker-compose.yml up 
 
   #sleep 3
 
@@ -351,8 +351,7 @@ elif [ "${MODE}" == "restart" ]; then
   python3 ./test/generator.py -o $ORGS -p $PEERS
   sleep 2
   cp ./tests/docker_compose_test.yml ./network/docker_compose.yml 
-  cp ./tests/peers_ports.json ./adminclient/peers_ports.json
-  cp ./tests/peers_ports.json ./peerclient/peers_ports.json
+  cp ./tests/peers_ports.json ./core/peers_ports.json
   sleep 3
   generateBlocks
   sleep 2
