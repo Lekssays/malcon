@@ -1,45 +1,41 @@
-import argparse
+import json
 import urllib3
 
-def parse_args():
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-o', '--orgs',
-                        dest = "orgs",
-                        help = "Orgs Number",
-                        default = 3,
-                        required = True)
-    parser.add_argument('-p', '--peers',
-                        dest = "peers",
-                        help = "Number of Peers per Org",
-                        default = 2,
-                        required = True)
-    return parser.parse_args()
-
 def check(endpoint: str) -> bool:
+    port = endpoint.split(":")
+    port = port[1]
     try:
         http = urllib3.PoolManager()
         response = http.request(
-            'GET', endpoint
+            'GET', "http://0.0.0.0:" + port
         )
         if response.status == 200:
             return True
         return False
     except Exception as e:
+        print(e)
         return False
+
+def load_endpoints() -> list:
+    with open("peers_ports.json", "r") as f:
+        peers_ports = json.load(f)
+
+    endpoints = []
+    for e in peers_ports:
+        endpoints.append(e['peer'] + ":" + str(e['ports']['web']))
+    
+    return endpoints
 
 def main():
     print("System Health Check")
-    orgs = int(parse_args().orgs)
-    peers = int(parse_args().peers)
-
-    for org in range(1, orgs + 1):
-        for peer in range(0, peers):
-            peer_id = "peer{}.org{}.example.com".format(str(peer), str(org))
-            endpoint = "http://0.0.0.0:100{}{}".format(str(org), str(peer))
-            if check(endpoint):
-                print(peer_id + " SUCCESS")
-            else:
-                print(peer_id + " FAILED")
+    endpoints = load_endpoints()
+    for endpoint in endpoints:
+        peer_id = endpoint.split(":")
+        peer_id = peer_id[0]
+        if check(endpoint=endpoint):
+            print(endpoint + " SUCCESS")
+        else:
+            print(endpoint + " FAILED")
 
 if __name__ == '__main__':
     main()

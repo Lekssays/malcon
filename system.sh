@@ -10,13 +10,20 @@ export ORDERER_HOSTNAME=orderer.example.com
 export ORG1_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
 export ORG2_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
 export ORG3_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
+export ORG4_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt
+export ORG5_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt
+export ORG6_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org6.example.com/peers/peer0.org6.example.com/tls/ca.crt
+export ORG7_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org7.example.com/peers/peer0.org7.example.com/tls/ca.crt
+export ORG8_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org8.example.com/peers/peer0.org8.example.com/tls/ca.crt
+export ORG9_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org9.example.com/peers/peer0.org9.example.com/tls/ca.crt
+export ORG10_TLS_ROOTCERT_FILE=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org10.example.com/peers/peer0.org10.example.com/tls/ca.crt
 export FABRIC_CFG_PATH=$PROJECT_DIRECTORY/network/config/
 export CCVERSION=1.0
 export CHANNEL_NAME=mychannel
 
 # TODO: CHANGE THIS
-ORGS=10
-PEERS=10
+ORGS=5
+PEERS=4
 
 script_path=`dirname "$0"`
 
@@ -41,7 +48,11 @@ function printHelp() {
 
 function setVariables() {
   orgId=$1
-  port=$((6051+orgId*1000))
+  if [ $orgId = 10 ]; then
+    port=10
+  else
+    port=$((1051+orgId*100))
+  fi
   export CORE_PEER_ADDRESS=0.0.0.0:${port}
   export CORE_PEER_LOCALMSPID="Org${orgId}MSP"
   export PEER_ORG_CA=$PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org${orgId}.example.com/peers/peer0.org${orgId}.example.com/tls/ca.crt
@@ -90,7 +101,7 @@ function networkUp() {
 
   #sleep 3
 
-  docker-compose -f docker-compose.yml up 
+  docker-compose -f docker-compose.yml up -d
 
   #sleep 3
 
@@ -112,7 +123,7 @@ function checkNetworkStatus() {
 function installDependencies() {
   for orgId in $(seq $ORGS);
   do
-    for peerId in $(seq $PEERS);
+    for ((peerId=0; peerId<$PEERS; peerId++));
     do
       echo "Installing dependencies on peer$peerId.org$orgId.example.com"
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt"
@@ -123,10 +134,10 @@ function installDependencies() {
 function configureRedis() {
   for orgId in $(seq $ORGS);
   do
-    for peerId in $(seq $PEERS);
+    for ((peerId=0; peerId<$PEERS; peerId++));
     do
       echo "Configuring redis on peer$peerId.org$orgId.example.com"
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "cp /client/redis.conf /client/peer$peerId.org$orgId.example.com.rd.conf && sed -i 's/XXXXX/110$orgId$peerId/' /client/peer$peerId.org$orgId.example.com.rd.conf && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf"
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "redis-server /client/peer$peerId.org$orgId.example.com.rd.conf"
     done
   done  
 }
@@ -134,7 +145,7 @@ function configureRedis() {
 function generateKeys() {
   for orgId in $(seq $ORGS);
   do
-    for peerId in $(seq $PEERS);
+    for ((peerId=0; peerId<$PEERS; peerId++));
     do
       echo "Generating keys on peer$peerId.org$orgId.example.com..."
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "/bin/sh /core/generate_keypair.sh &"
@@ -145,7 +156,7 @@ function generateKeys() {
 function runEndpoints() {
   for orgId in $(seq $ORGS);
   do
-    for peerId in $(seq $PEERS);
+    for ((peerId=0; peerId<$PEERS; peerId++));
     do
       echo "Running endpoint on peer$peerId.org$orgId.example.com..."
       docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /client/app.py"
@@ -157,7 +168,7 @@ function runGateways() {
   for orgId in $(seq $ORGS);
   do
     echo "Running gateway on peer0.org$orgId.example.com..."
-    docker exec -d peer0.org$orgId.example.com /bin/sh -c "python3 /core/gateway.py"  
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "apk add py3-zmq && pip3 install zmq && python3 /core/gateway.py"  
   done
 }
 
@@ -205,7 +216,7 @@ function monitorNetwork() {
 function clearState() {
     docker exec peer0.org1.example.com \
     peer chaincode invoke -o $ORDERER_ADDRESS -C $CHANNEL_NAME -n malcon \
-    --peerAddresses peer0.org1.example.com:7051 \
+    --peerAddresses peer0.org1.example.com:1151 \
     --tls --cafile $ORDERER_CA --tlsRootCertFiles $ORG1_TLS_ROOTCERT_FILE \
     --peerAddresses peer0.org2.example.com:8051 \
     --tls --cafile $ORDERER_CA --tlsRootCertFiles $ORG2_TLS_ROOTCERT_FILE \
@@ -237,16 +248,15 @@ function deployChaincode() {
   for orgId in $(seq $ORGS);
   do
     setVariables $orgId
-    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
+    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')"
   done
 
   echo "Check for $1 commit readiness..."
-  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')" --output json
+  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')" --output json
 
   # TODO: make this more modular and modify endorsement policy in PROD
   echo "Committing $1 chaincode definition to channel..."
-  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:8051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:9051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
-
+  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt  --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')"
   peer lifecycle chaincode querycommitted --channelID $CHANNEL_NAME --name $1 --cafile $ORDERER_CA
 }
 
@@ -255,8 +265,7 @@ function invokeChaincode() {
   setVariables 1
   # FIXME: make this more modular
   echo "Invoke $1 chaincode..."
-  peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:8051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:9051 --tlsRootCertFiles $PROJECT_DIRECTORY/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
-
+  peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
 }
 
 function queryChainecode() {
@@ -285,17 +294,17 @@ function queryChainecode() {
 function populate() {
   echo "${PWD}"
   echo "Create peer peer1.org1.example.com"
-  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreatePeer","Args":["peer1.org1.example.com", "[\"peer2.org1.example.com\"]", "1606834745", "PID_000001", "true", "true", "true"]}'
+  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreatePeer","Args":["peer1.org1.example.com", "[\"peer2.org1.example.com\"]", "1606834745", "PID_000001", "true", "true", "true"]}'
 
   sleep 3
 
   echo "Create peer peer1.org2.example.com"
-  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreatePeer","Args":["peer1.org2.example.com", "[\"peer1.org1.example.com\"]", "1606834745", "PID_000001", "false", "true", "true"]}'
+  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreatePeer","Args":["peer1.org2.example.com", "[\"peer1.org1.example.com\"]", "1606834745", "PID_000001", "false", "true", "true"]}'
 
   sleep 3
 
   echo "Create malware MAL_000004"
-  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n malware  --peerAddresses 0.0.0.0:7051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreateMalware","Args":["MAL_000004", "kitkat.dark.mal", "/client/kitkat.dark.mal", "bot", "4e4d6c332b6fe62a63afe56171fd3725", "1606834745", "peer1.org1.example.com", "false", "[\"M\"]", "[1337]"]}'
+  peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n malware  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"function":"CreateMalware","Args":["MAL_000004", "kitkat.dark.mal", "/client/kitkat.dark.mal", "bot", "4e4d6c332b6fe62a63afe56171fd3725", "1606834745", "peer1.org1.example.com", "false", "[\"M\"]", "[1337]"]}'
 
 }
 
@@ -348,9 +357,7 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "restart" ]; then
   restartNetwork
   sleep 2
-  python3 ./test/generator.py -o $ORGS -p $PEERS
-  sleep 2
-  cp ./tests/docker_compose_test.yml ./network/docker_compose.yml 
+  cp ./tests/docker_compose_test.yml ./network/docker-compose.yml 
   cp ./tests/peers_ports.json ./core/peers_ports.json
   sleep 3
   generateBlocks
@@ -374,8 +381,8 @@ elif [ "${MODE}" == "restart" ]; then
   configureRedis
   sleep 3
   runEndpoints
-  #sleep 3
-  #runGateways
+  # sleep 3
+  # runGateways
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
 elif [ "${MODE}" == "deployW" ]; then
@@ -384,6 +391,8 @@ elif [ "${MODE}" == "populate" ]; then
   populate
 elif [ "${MODE}" == "runEndpoints" ]; then
   runEndpoints
+elif [ "${MODE}" == "runGateways" ]; then
+  runGateways
 else
   printHelp
   exit 1

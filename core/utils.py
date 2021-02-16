@@ -256,7 +256,7 @@ def get_peer_id(peer: str):
 
 def load_peers_ports():
     with open("peers_ports.json", "r") as f:
-        peers_ports = json.load(f.read())
+        peers_ports = json.load(f)
     return peers_ports
 
 def broadcast_request(election_id: str):

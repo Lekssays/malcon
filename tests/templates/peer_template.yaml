@@ -22,6 +22,7 @@
     - ./crypto-config/peerOrganizations/org_id.example.com/peers/core_id/tls:/etc/hyperledger/peer/tls
     - ./crypto-config/peerOrganizations/org_id.example.com/users:/etc/hyperledger/users
     - ./../client_path/:/client
+    - ./../core_path/:/core
     depends_on:
     - orderer.example.com
     networks:

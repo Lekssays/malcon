@@ -17,3 +17,5 @@ peerclient/kitkat.dark.mal
 *.tar
 test.py
 docker_compose_test.yml 
+tests/peers_ports.json
+core/peers_ports.json

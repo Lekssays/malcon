@@ -12,7 +12,7 @@ PeerOrgs:
   - Name: Org1
     Domain: org1.example.com
     Template:
-      Count: 2
+      Count: 11
       SANS:
         - "localhost"
         - "127.0.0.1"
@@ -23,7 +23,7 @@ PeerOrgs:
   - Name: Org2
     Domain: org2.example.com
     Template:
-      Count: 2
+      Count: 11
       SANS:
         - "localhost"
         - "127.0.0.1"
@@ -33,7 +33,7 @@ PeerOrgs:
   - Name: Org3
     Domain: org3.example.com
     Template:
-      Count: 2
+      Count: 11
       SANS:
         - "localhost"
         - "127.0.0.1"
@@ -44,7 +44,7 @@ PeerOrgs:
   - Name: Org4
     Domain: org4.example.com
     Template:
-      Count: 2
+      Count: 11
       SANS:
         - "localhost"
         - "127.0.0.1"
@@ -55,7 +55,7 @@ PeerOrgs:
   - Name: Org5
     Domain: org5.example.com
     Template:
-      Count: 2
+      Count: 11
       SANS:
         - "localhost"
         - "127.0.0.1"

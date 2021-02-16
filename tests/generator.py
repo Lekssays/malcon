@@ -103,6 +103,11 @@ def generate_docker_configs(peers_ports: list) -> list:
         content = content.replace("operations_port", str(e['ports']['operations']))
         content = content.replace("org_id", get_org(peer=e['peer']))
         content = content.replace("org_msp", get_org_msp(peer=e['peer']))
+        if is_admin(peer=e['peer']):
+            content = content.replace("client_path", "adminclient")
+            content = content.replace("core_path", "core")
+        else:
+            content = content.replace("client_path", "peerclient")
         config_file.close()
         configs.append(content)
         peers.append(e['peer'])
