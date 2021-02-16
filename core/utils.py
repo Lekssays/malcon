@@ -254,15 +254,23 @@ def get_peer_id(peer: str):
             _id += c
     return _id[::-1]
 
+def load_peers_ports():
+    with open("peers_ports.json", "r") as f:
+        peers_ports = json.load(f.read())
+    return peers_ports
+
 def broadcast_request(election_id: str):
     peers = get_voting_peers()
     count = 0
-    for peer in peers:
-        port = "110" + get_peer_id(peer=peer)
-        rr = redis.Redis(host=peer, port=port)
-        if not rr.exists(election_id + "_init"):
-            rr.sadd(election_id + "_init", 1)
-            count += 1
+    peers_ports = load_peers_ports()
+    for e in peers_ports:
+        for peer in peers:
+            if e['peer'] == peer:
+                port = e['ports']['redis']
+                rr = redis.Redis(host=peer, port=port)
+                if not rr.exists(election_id + "_init"):
+                    rr.sadd(election_id + "_init", 1)
+                    count += 1
     if count == len(peers):
         return True
     return False
