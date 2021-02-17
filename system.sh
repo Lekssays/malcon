@@ -49,7 +49,7 @@ function printHelp() {
 function setVariables() {
   orgId=$1
   if [ $orgId = 10 ]; then
-    port=10
+    port=1051
   else
     port=$((1051+orgId*100))
   fi
@@ -96,18 +96,9 @@ function generateBlocks() {
 
 function networkUp() {
   cd $PROJECT_DIRECTORY/network/
-  
-  #docker-compose -f docker-compose.yml up -d ca.example.com ca.org1.example.com ca.org2.example.com ca.org3.example.com orderer.example.com
-
-  #sleep 3
 
   docker-compose -f docker-compose.yml up -d
 
-  #sleep 3
-
-  #docker-compose -f docker-compose.yml up -d peer1.org1.example.com peer1.org2.example.com peer1.org3.example.com
-
-  
   echo "**********************************"
   echo "********* Network Status *********"
   echo "**********************************"
@@ -118,17 +109,6 @@ function networkUp() {
 
 function checkNetworkStatus() {
   docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-}
-
-function installDependencies() {
-  for orgId in $(seq $ORGS);
-  do
-    for ((peerId=0; peerId<$PEERS; peerId++));
-    do
-      echo "Installing dependencies on peer$peerId.org$orgId.example.com"
-      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev openssl screen && apk add --no-cache --update python3 && apk add --no-cache --update redis && redis-server /client/peer$peerId.org$orgId.example.com.rd.conf && pip3 install --upgrade pip setuptools && pip3 install -r /client/requirements.txt"
-    done
-  done  
 }
 
 function configureRedis() {
@@ -186,45 +166,6 @@ function createChannel() {
   done
 }
 
-function monitorNetwork() {
-  if [ -z "$1" ]; then
-    DOCKER_NETWORK=malcon_basic
-  else
-    DOCKER_NETWORK="$1"
-  fi
-
-  if [ -z "$2" ]; then
-    PORT=8000
-  else
-    PORT="$2"
-  fi
-
-  echo "Starting monitoring on all containers on the network ${DOCKER_NETWORK}"
-
-  docker kill logspout 2> /dev/null 1>&2 || true
-  docker rm logspout 2> /dev/null 1>&2 || true
-
-  docker run -d --name="logspout" \
-    --volume=/var/run/docker.sock:/var/run/docker.sock \
-    --publish=127.0.0.1:${PORT}:80 \
-    --network  ${DOCKER_NETWORK} \
-    gliderlabs/logspout
-  sleep 3
-  curl http://127.0.0.1:${PORT}/logs
-}
-
-function clearState() {
-    docker exec peer0.org1.example.com \
-    peer chaincode invoke -o $ORDERER_ADDRESS -C $CHANNEL_NAME -n malcon \
-    --peerAddresses peer0.org1.example.com:1151 \
-    --tls --cafile $ORDERER_CA --tlsRootCertFiles $ORG1_TLS_ROOTCERT_FILE \
-    --peerAddresses peer0.org2.example.com:8051 \
-    --tls --cafile $ORDERER_CA --tlsRootCertFiles $ORG2_TLS_ROOTCERT_FILE \
-    --peerAddresses peer0.org3.example.com:9051 \
-    --tls --cafile $ORDERER_CA --tlsRootCertFiles $ORG3_TLS_ROOTCERT_FILE \
-    -c '{"Args":["clearState"]}'
-}
-
 function deployChaincode() {
   cd $PROJECT_DIRECTORY
   echo "Packaging $1 chaincode..."
@@ -254,7 +195,6 @@ function deployChaincode() {
   echo "Check for $1 commit readiness..."
   peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')" --output json
 
-  # TODO: make this more modular and modify endorsement policy in PROD
   echo "Committing $1 chaincode definition to channel..."
   peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt  --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')"
   peer lifecycle chaincode querycommitted --channelID $CHANNEL_NAME --name $1 --cafile $ORDERER_CA
@@ -263,7 +203,6 @@ function deployChaincode() {
 function invokeChaincode() {
   cd $PROJECT_DIRECTORY
   setVariables 1
-  # FIXME: make this more modular
   echo "Invoke $1 chaincode..."
   peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
 }
@@ -316,30 +255,8 @@ else
   shift
 fi
 
-if [ "${MODE}" == "up" ]; then
-  generateBlocks
-  sleep 2
-  networkUp
-  sleep 3
-  createChannel
-  sleep 3
-  deployChaincode "malware"
-  sleep 2
-  deployChaincode "action"
-  sleep 2
-  deployChaincode "peer"
-  sleep 2
-  invokeChaincode "malware"
-  sleep 2
-  invokeChaincode "action"
-  sleep 2
-  invokeChaincode "peer"
-elif [ "${MODE}" == "down" ]; then
+if [ "${MODE}" == "down" ]; then
   networkDown
-elif [ "${MODE}" == "clear" ]; then
-  clearState
-elif [ "${MODE}" == "monitor" ]; then
-  monitorNetwork
 elif [ "${MODE}" == "deployCC" ]; then
   deployChaincode "malware"
   sleep 2
@@ -354,8 +271,12 @@ elif [ "${MODE}" == "createC" ]; then
   createChannel
 elif [ "${MODE}" == "clear" ]; then
   clearNetwork
-elif [ "${MODE}" == "restart" ]; then
+elif [ "${MODE}" == "up" ]; then
   restartNetwork
+  sleep 2
+  cd ./tests/
+  python3 generator.py -o $ORGS -p $PEERS
+  cd ..
   sleep 2
   cp ./tests/docker_compose_test.yml ./network/docker-compose.yml 
   cp ./tests/peers_ports.json ./core/peers_ports.json
@@ -374,13 +295,15 @@ elif [ "${MODE}" == "restart" ]; then
   sleep 2
   invokeChaincode "peer"
   sleep 5
-  #installDependencies
-  #sleep 1
   generateKeys
   sleep 3
   configureRedis
   sleep 3
   runEndpoints
+  sleep 5
+  cd ./tests/
+  python3 health_check.py
+  cd ..
   # sleep 3
   # runGateways
 elif [ "${MODE}" == "query" ]; then
