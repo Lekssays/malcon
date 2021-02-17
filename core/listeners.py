@@ -64,9 +64,9 @@ def votes():
             if len(utils.get_votes(election_id=vote['election_id'], eround=vote['round'])) == len(utils.get_voting_peers()) + 1:
                 if not finalized_elections[vote['election_id']]:
                     winners, total_votes = utils.is_elec_final(election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
-
                     if len(winners) == 1 and total_votes > (len(utils.get_voting_peers()) + 1) / 2:
                         finalized_elections[vote['election_id']] = True
+                        utils.save_elec_winner(election_id=vote['election_id'], eround=vote['round'], votes_count=winners[0][1], winner=winners[0][0])
                         if winners[0][0] == env("CORE_PEER_ID") and winners[0][1] > (len(utils.get_voting_peers()) + 1) / 2:
                             print("MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), vote['election_id']))
                             utils.claim_executor(election_id=vote['election_id'], eround=vote['round'], votes=winners[0][1], core_id=env("CORE_PEER_ID"))

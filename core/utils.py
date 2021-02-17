@@ -177,18 +177,18 @@ def generate_token():
     signature = pow(thash, privatekey.d, privatekey.n)
     return token, signature
 
-def verify_executor(election_id: str, executor: str, eround: int, votes_count: int):
-    votes = get_votes(election_id=election_id, eround=eround)
-    leaderboard = defaultdict(lambda : 0)
-    
-    for vote in votes:
-        if vote.timestamp >= 1609455600:
-            vote = json.loads(vote.signature_message_fragment.decode().replace("\'", "\""))
-            if election_id == vote['election_id'] and eround == int(vote['round']):
-                leaderboard[vote['candidate']] += 1
+def save_elec_winner(election_id: str, eround: int, votes_count: int, winner: str):
+    key = election_id + "_" + str(eround) + "_" + str(votes_count)
+    r.set(key, winner)
 
-    winner = max(leaderboard.items(), key=lambda a: a[1])
-    if executor == winner[0] and votes_count == winner[1]:
+def get_elec_winner(election_id: str, eround: int, votes_count: int):
+    key = election_id + "_" + str(eround) + "_" + str(votes_count)
+    winner = r.get(key)
+    return winner.decode()
+
+def verify_executor(election_id: str, executor: str, eround: int, votes_count: int):
+    winner = get_elec_winner(election_id=election_id, eround=eround, votes_count=votes_count)
+    if executor == winner:
         return True
     return False
 
@@ -241,9 +241,8 @@ def is_elec_final(election_id: str, eround: int):
     
     print("MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes)))
     
-    if len(winners) == 1:
-        if winners[0][1] > (len(get_voting_peers()) + 1) / 2:
-            r.sadd(election_id, eround)
+    if len(winners) == 1 and total_votes == (len(get_voting_peers()) + 1):
+        r.sadd(election_id, eround)
     
     return winners, total_votes
 
@@ -255,7 +254,7 @@ def get_peer_id(peer: str):
     return _id[::-1]
 
 def load_peers_ports():
-    with open("peers_ports.json", "r") as f:
+    with open("/core/peers_ports.json", "r") as f:
         peers_ports = json.load(f)
     return peers_ports
 

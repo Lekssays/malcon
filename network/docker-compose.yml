@@ -100,14 +100,14 @@ services:
     - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org1.example.com:9443
-    - CORE_PEER_ENDPOINT=peer0.org1.example.com:36767
-    - CORE_PEER_REDIS_PORT=20943
+    - CORE_PEER_ENDPOINT=peer0.org1.example.com:36534
+    - CORE_PEER_REDIS_PORT=20424
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
     - 1151:7051
-    - 36018:9443
-    - 36767:5000
-    - 20943:20943
+    - 39115:9443
+    - 36534:5000
+    - 20424:20424
     volumes:
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/peer/tls
@@ -130,14 +130,14 @@ services:
     - CORE_PEER_ADDRESS=peer1.org1.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org1.example.com:9443
-    - CORE_PEER_ENDPOINT=peer1.org1.example.com:35143
-    - CORE_PEER_REDIS_PORT=11622
+    - CORE_PEER_ENDPOINT=peer1.org1.example.com:34242
+    - CORE_PEER_REDIS_PORT=13565
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9522:7051
-    - 37936:9443
-    - 35143:5000
-    - 11622:11622
+    - 8554:7051
+    - 43495:9443
+    - 34242:5000
+    - 13565:13565
     volumes:
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls:/etc/hyperledger/peer/tls
@@ -160,14 +160,14 @@ services:
     - CORE_PEER_ADDRESS=peer2.org1.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org1.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer2.org1.example.com:9443
-    - CORE_PEER_ENDPOINT=peer2.org1.example.com:42166
-    - CORE_PEER_REDIS_PORT=18950
+    - CORE_PEER_ENDPOINT=peer2.org1.example.com:39892
+    - CORE_PEER_REDIS_PORT=14511
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8608:7051
-    - 33242:9443
-    - 42166:5000
-    - 18950:18950
+    - 8147:7051
+    - 43977:9443
+    - 39892:5000
+    - 14511:14511
     volumes:
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer2.org1.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer2.org1.example.com/tls:/etc/hyperledger/peer/tls
@@ -190,14 +190,14 @@ services:
     - CORE_PEER_ADDRESS=peer3.org1.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org1.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer3.org1.example.com:9443
-    - CORE_PEER_ENDPOINT=peer3.org1.example.com:41139
-    - CORE_PEER_REDIS_PORT=14020
+    - CORE_PEER_ENDPOINT=peer3.org1.example.com:34156
+    - CORE_PEER_REDIS_PORT=11741
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8324:7051
-    - 35119:9443
-    - 41139:5000
-    - 14020:14020
+    - 9760:7051
+    - 35339:9443
+    - 34156:5000
+    - 11741:11741
     volumes:
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer3.org1.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org1.example.com/peers/peer3.org1.example.com/tls:/etc/hyperledger/peer/tls
@@ -220,14 +220,14 @@ services:
     - CORE_PEER_ADDRESS=peer0.org2.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org2.example.com:9443
-    - CORE_PEER_ENDPOINT=peer0.org2.example.com:37306
-    - CORE_PEER_REDIS_PORT=18806
+    - CORE_PEER_ENDPOINT=peer0.org2.example.com:43409
+    - CORE_PEER_REDIS_PORT=19111
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
     - 1251:7051
-    - 39462:9443
-    - 37306:5000
-    - 18806:18806
+    - 41359:9443
+    - 43409:5000
+    - 19111:19111
     volumes:
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls:/etc/hyperledger/peer/tls
@@ -250,14 +250,14 @@ services:
     - CORE_PEER_ADDRESS=peer1.org2.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org2.example.com:9443
-    - CORE_PEER_ENDPOINT=peer1.org2.example.com:40477
-    - CORE_PEER_REDIS_PORT=12188
+    - CORE_PEER_ENDPOINT=peer1.org2.example.com:43715
+    - CORE_PEER_REDIS_PORT=20443
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8399:7051
-    - 41733:9443
-    - 40477:5000
-    - 12188:12188
+    - 9984:7051
+    - 43305:9443
+    - 43715:5000
+    - 20443:20443
     volumes:
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls:/etc/hyperledger/peer/tls
@@ -280,14 +280,14 @@ services:
     - CORE_PEER_ADDRESS=peer2.org2.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org2.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer2.org2.example.com:9443
-    - CORE_PEER_ENDPOINT=peer2.org2.example.com:38142
-    - CORE_PEER_REDIS_PORT=17854
+    - CORE_PEER_ENDPOINT=peer2.org2.example.com:34704
+    - CORE_PEER_REDIS_PORT=20357
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9189:7051
-    - 41784:9443
-    - 38142:5000
-    - 17854:17854
+    - 8502:7051
+    - 35117:9443
+    - 34704:5000
+    - 20357:20357
     volumes:
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/tls:/etc/hyperledger/peer/tls
@@ -310,14 +310,14 @@ services:
     - CORE_PEER_ADDRESS=peer3.org2.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org2.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer3.org2.example.com:9443
-    - CORE_PEER_ENDPOINT=peer3.org2.example.com:35913
-    - CORE_PEER_REDIS_PORT=17440
+    - CORE_PEER_ENDPOINT=peer3.org2.example.com:34680
+    - CORE_PEER_REDIS_PORT=19950
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9121:7051
-    - 40525:9443
-    - 35913:5000
-    - 17440:17440
+    - 8901:7051
+    - 34980:9443
+    - 34680:5000
+    - 19950:19950
     volumes:
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer3.org2.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org2.example.com/peers/peer3.org2.example.com/tls:/etc/hyperledger/peer/tls
@@ -340,14 +340,14 @@ services:
     - CORE_PEER_ADDRESS=peer0.org3.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org3.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org3.example.com:9443
-    - CORE_PEER_ENDPOINT=peer0.org3.example.com:43416
-    - CORE_PEER_REDIS_PORT=14762
+    - CORE_PEER_ENDPOINT=peer0.org3.example.com:37943
+    - CORE_PEER_REDIS_PORT=18209
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
     - 1351:7051
-    - 33585:9443
-    - 43416:5000
-    - 14762:14762
+    - 39927:9443
+    - 37943:5000
+    - 18209:18209
     volumes:
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls:/etc/hyperledger/peer/tls
@@ -370,14 +370,14 @@ services:
     - CORE_PEER_ADDRESS=peer1.org3.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org3.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org3.example.com:9443
-    - CORE_PEER_ENDPOINT=peer1.org3.example.com:37929
-    - CORE_PEER_REDIS_PORT=11090
+    - CORE_PEER_ENDPOINT=peer1.org3.example.com:38992
+    - CORE_PEER_REDIS_PORT=15416
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9129:7051
-    - 38412:9443
-    - 37929:5000
-    - 11090:11090
+    - 8899:7051
+    - 33937:9443
+    - 38992:5000
+    - 15416:15416
     volumes:
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/tls:/etc/hyperledger/peer/tls
@@ -400,14 +400,14 @@ services:
     - CORE_PEER_ADDRESS=peer2.org3.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org3.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer2.org3.example.com:9443
-    - CORE_PEER_ENDPOINT=peer2.org3.example.com:37454
-    - CORE_PEER_REDIS_PORT=18662
+    - CORE_PEER_ENDPOINT=peer2.org3.example.com:39635
+    - CORE_PEER_REDIS_PORT=12457
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9705:7051
-    - 43192:9443
-    - 37454:5000
-    - 18662:18662
+    - 10408:7051
+    - 43834:9443
+    - 39635:5000
+    - 12457:12457
     volumes:
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer2.org3.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer2.org3.example.com/tls:/etc/hyperledger/peer/tls
@@ -430,14 +430,14 @@ services:
     - CORE_PEER_ADDRESS=peer3.org3.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org3.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer3.org3.example.com:9443
-    - CORE_PEER_ENDPOINT=peer3.org3.example.com:38827
-    - CORE_PEER_REDIS_PORT=21889
+    - CORE_PEER_ENDPOINT=peer3.org3.example.com:43681
+    - CORE_PEER_REDIS_PORT=12197
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8192:7051
-    - 40013:9443
-    - 38827:5000
-    - 21889:21889
+    - 9387:7051
+    - 43335:9443
+    - 43681:5000
+    - 12197:12197
     volumes:
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer3.org3.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org3.example.com/peers/peer3.org3.example.com/tls:/etc/hyperledger/peer/tls
@@ -460,14 +460,14 @@ services:
     - CORE_PEER_ADDRESS=peer0.org4.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org4.example.com:9443
-    - CORE_PEER_ENDPOINT=peer0.org4.example.com:41187
-    - CORE_PEER_REDIS_PORT=20097
+    - CORE_PEER_ENDPOINT=peer0.org4.example.com:43852
+    - CORE_PEER_REDIS_PORT=20689
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
     - 1451:7051
-    - 41006:9443
-    - 41187:5000
-    - 20097:20097
+    - 34563:9443
+    - 43852:5000
+    - 20689:20689
     volumes:
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls:/etc/hyperledger/peer/tls
@@ -490,14 +490,14 @@ services:
     - CORE_PEER_ADDRESS=peer1.org4.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org4.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org4.example.com:9443
-    - CORE_PEER_ENDPOINT=peer1.org4.example.com:37872
-    - CORE_PEER_REDIS_PORT=12036
+    - CORE_PEER_ENDPOINT=peer1.org4.example.com:33980
+    - CORE_PEER_REDIS_PORT=19401
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9817:7051
-    - 35333:9443
-    - 37872:5000
-    - 12036:12036
+    - 10941:7051
+    - 36784:9443
+    - 33980:5000
+    - 19401:19401
     volumes:
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer1.org4.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer1.org4.example.com/tls:/etc/hyperledger/peer/tls
@@ -520,14 +520,14 @@ services:
     - CORE_PEER_ADDRESS=peer2.org4.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org4.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer2.org4.example.com:9443
-    - CORE_PEER_ENDPOINT=peer2.org4.example.com:40418
-    - CORE_PEER_REDIS_PORT=21574
+    - CORE_PEER_ENDPOINT=peer2.org4.example.com:40354
+    - CORE_PEER_REDIS_PORT=20537
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8776:7051
-    - 36949:9443
-    - 40418:5000
-    - 21574:21574
+    - 9717:7051
+    - 42891:9443
+    - 40354:5000
+    - 20537:20537
     volumes:
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer2.org4.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer2.org4.example.com/tls:/etc/hyperledger/peer/tls
@@ -550,14 +550,14 @@ services:
     - CORE_PEER_ADDRESS=peer3.org4.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org4.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer3.org4.example.com:9443
-    - CORE_PEER_ENDPOINT=peer3.org4.example.com:43362
-    - CORE_PEER_REDIS_PORT=18622
+    - CORE_PEER_ENDPOINT=peer3.org4.example.com:36789
+    - CORE_PEER_REDIS_PORT=15678
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8981:7051
-    - 40855:9443
-    - 43362:5000
-    - 18622:18622
+    - 10201:7051
+    - 35506:9443
+    - 36789:5000
+    - 15678:15678
     volumes:
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer3.org4.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org4.example.com/peers/peer3.org4.example.com/tls:/etc/hyperledger/peer/tls
@@ -580,14 +580,14 @@ services:
     - CORE_PEER_ADDRESS=peer0.org5.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org5.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer0.org5.example.com:9443
-    - CORE_PEER_ENDPOINT=peer0.org5.example.com:38215
-    - CORE_PEER_REDIS_PORT=18046
+    - CORE_PEER_ENDPOINT=peer0.org5.example.com:42120
+    - CORE_PEER_REDIS_PORT=18335
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
     - 1551:7051
-    - 37811:9443
-    - 38215:5000
-    - 18046:18046
+    - 40488:9443
+    - 42120:5000
+    - 18335:18335
     volumes:
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls:/etc/hyperledger/peer/tls
@@ -610,14 +610,14 @@ services:
     - CORE_PEER_ADDRESS=peer1.org5.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org5.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer1.org5.example.com:9443
-    - CORE_PEER_ENDPOINT=peer1.org5.example.com:35779
-    - CORE_PEER_REDIS_PORT=17576
+    - CORE_PEER_ENDPOINT=peer1.org5.example.com:36371
+    - CORE_PEER_REDIS_PORT=21007
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8434:7051
-    - 39628:9443
-    - 35779:5000
-    - 17576:17576
+    - 10421:7051
+    - 33467:9443
+    - 36371:5000
+    - 21007:21007
     volumes:
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer1.org5.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer1.org5.example.com/tls:/etc/hyperledger/peer/tls
@@ -640,14 +640,14 @@ services:
     - CORE_PEER_ADDRESS=peer2.org5.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org5.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer2.org5.example.com:9443
-    - CORE_PEER_ENDPOINT=peer2.org5.example.com:37944
-    - CORE_PEER_REDIS_PORT=20704
+    - CORE_PEER_ENDPOINT=peer2.org5.example.com:39471
+    - CORE_PEER_REDIS_PORT=13234
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 9422:7051
-    - 42513:9443
-    - 37944:5000
-    - 20704:20704
+    - 8962:7051
+    - 38947:9443
+    - 39471:5000
+    - 13234:13234
     volumes:
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer2.org5.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer2.org5.example.com/tls:/etc/hyperledger/peer/tls
@@ -670,14 +670,14 @@ services:
     - CORE_PEER_ADDRESS=peer3.org5.example.com:7051
     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org5.example.com:7051
     - CORE_OPERATIONS_LISTENADDRESS=peer3.org5.example.com:9443
-    - CORE_PEER_ENDPOINT=peer3.org5.example.com:39496
-    - CORE_PEER_REDIS_PORT=11342
+    - CORE_PEER_ENDPOINT=peer3.org5.example.com:40811
+    - CORE_PEER_REDIS_PORT=19927
     - CORE_PEER_NEIGHBORS=neighbors
     ports:
-    - 8828:7051
-    - 37000:9443
-    - 39496:5000
-    - 11342:11342
+    - 10084:7051
+    - 38241:9443
+    - 40811:5000
+    - 19927:19927
     volumes:
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer3.org5.example.com/msp:/etc/hyperledger/peer/msp
     - ./crypto-config/peerOrganizations/org5.example.com/peers/peer3.org5.example.com/tls:/etc/hyperledger/peer/tls
