@@ -62,3 +62,58 @@ PeerOrgs:
         - "0.0.0.0"
     Users:
       Count: 1
+
+  - Name: Org6
+    Domain: org6.example.com
+    Template:
+      Count: 11
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org7
+    Domain: org7.example.com
+    Template:
+      Count: 11
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+  
+  - Name: Org8
+    Domain: org8.example.com
+    Template:
+      Count: 11
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org9
+    Domain: org9.example.com
+    Template:
+      Count: 11
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org10
+    Domain: org10.example.com
+    Template:
+      Count: 11
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
