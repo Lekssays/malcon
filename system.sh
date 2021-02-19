@@ -153,7 +153,7 @@ function runGateways() {
   for orgId in 1 2 3
   do
     echo "Running gateway on peer0.org$orgId.example.com..."
-    docker exec -d peer0.org$orgId.example.com /bin/sh -c "python3 /core/gateway.py"  
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "pip3 install websockets asyncio && python3 /core/gateway.py"  
   done
 }
 
@@ -365,7 +365,7 @@ elif [ "${MODE}" == "restart" ]; then
   configureRedis
   sleep 3
   runEndpoints
-  #sleep 3
+  #sleep 6
   #runGateways
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
@@ -375,6 +375,8 @@ elif [ "${MODE}" == "populate" ]; then
   populate
 elif [ "${MODE}" == "runEndpoints" ]; then
   runEndpoints
+elif [ "${MODE}" == "runGateways" ]; then
+  runGateways
 else
   printHelp
   exit 1

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import asyncio
 import json
 import listeners
 import time
@@ -16,6 +17,8 @@ r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 def main():
     print("malware containment project")
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     # Register Peers
     if not r.smembers(env("CORE_PEER_ID")):
         endpoint = env("CORE_PEER_ENDPOINT")
@@ -25,8 +28,10 @@ def main():
         iota_addr = utils.MYADDRESS
         register_peer_tx = utils.register_peer(endpoint=endpoint, public_key=pubkey, core_id=core_id, address=iota_addr)
         r.sadd(env("CORE_PEER_ID"), str(register_peer_tx))
-        print("Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx))
-
+        message = "Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx)
+        print(message)
+        loop.run_until_complete(utils.send_log(message))
+    
     # store voting peers locally
     if not r.exists('voting_peers'):
         utils.store_voting_peers(origin=env("CORE_PEER_ID"))
