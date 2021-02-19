@@ -148,7 +148,7 @@ function runGateways() {
   for orgId in $(seq $ORGS);
   do
     echo "Running gateway on peer0.org$orgId.example.com..."
-    docker exec -d peer0.org$orgId.example.com /bin/sh -c "apk add py3-zmq && pip3 install zmq && python3 /core/gateway.py"  
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "pip3 install websockets asyncio && python3 /core/gateway.py"  
   done
 }
 

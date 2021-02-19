@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import asyncio
 import datetime
 import json
 import math
@@ -8,6 +9,7 @@ import redis
 import subprocess
 import threading
 import urllib3
+import websockets
 import zmq
 
 from collections import defaultdict
@@ -27,6 +29,14 @@ API = Iota(ENDPOINT, testnet = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
+
+async def send_log(message: str):
+    uri = "ws://172.17.0.1:8765"
+    now = datetime.datetime.now()
+    dt = now.strftime("%d/%m/%Y %H:%M:%S")
+    message = dt + " - [" + env("CORE_PEER_ID") + "] " + message
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(message)
 
 def get_tag(resource: str):
     return "MALCON" + resource.upper() + env("VERSION")
@@ -239,7 +249,9 @@ def is_elec_final(election_id: str, eround: int):
         if leaderboard[candidate] == max_votes:
             winners.append((candidate, max_votes))
     
-    print("MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes)))
+    message = "MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes))
+    print(message)
+    asyncio.get_event_loop().run_until_complete(send_log(message))
     
     if len(winners) == 1 and total_votes == (len(get_voting_peers()) + 1):
         r.sadd(election_id, eround)

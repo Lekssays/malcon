@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import asyncio
 import datetime
 import json
 import math
@@ -17,7 +18,12 @@ TIME = 0
 
 def elections():
     socket = utils.get_socket_connection()
-    print("Listening on MALCONELEC tag...")
+    message = "Listening on MALCONELEC tag..."
+    print(message)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(utils.send_log(message))
+
     while True:
         message = socket.recv()
         data = message.split()
@@ -26,30 +32,46 @@ def elections():
             election = utils.read_transaction(tx_hash=tx_hash)
             response = utils.broadcast_request(election_id=election['election_id'])
             if response:
-                print("MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id']))
+                message = "MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id'])
+                print(message)
+                loop.run_until_complete(utils.send_log(message))
                 is_initiated = utils.initiate_elec(election_id=election['election_id'])
                 if is_initiated:
-                    print("MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id']))
+                    message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
+                    print(message)
+                    loop.run_until_complete(utils.send_log(message))
                     utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
 
 def requests():
     socket = utils.get_socket_connection()
-    print("Listening on MALCONREQ tag...")
+    message = "Listening on MALCONREQ tag..."
+    print(message)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(utils.send_log(message))
     while True:
         message = socket.recv()
         data = message.split()
         tx_hash = data[1].decode()
         if utils.parse_tag(tag=data[12].decode()) == utils.get_tag(resource="REQ"):
             request = utils.read_transaction(tx_hash=tx_hash)
-            print("MALCONREQ: Sending vote...")
+            message = "MALCONREQ: Sending vote..."
+            print(message)
+            loop.run_until_complete(utils.send_log(message))
             candidates = utils.get_voting_peers()
             candidate = candidates[random.randint(0, len(candidates) - 1)]
             utils.send_vote(candidate=candidate, election_id=request['election_id'], eround=1)
-            print('MALCONREQ: Peer {} voted successfully on candidate {} in election {} round 1'.format(env("CORE_PEER_ID"), candidate, request['election_id']))
+            message = "MALCONREQ: Peer {} voted successfully on candidate {} in election {} round 1".format(env("CORE_PEER_ID"), candidate, request['election_id'])
+            print(message)
+            loop.run_until_complete(utils.send_log(message))
 
 def votes():
     socket = utils.get_socket_connection()
-    print("Listening on MALCONVOTE tag...")
+    message = "Listening on MALCONVOTE tag..."
+    print(message)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(utils.send_log(message))
     elections_rounds = defaultdict(lambda : 1)
     finalized_elections = defaultdict(lambda : False)
     while True:
@@ -68,7 +90,9 @@ def votes():
                         finalized_elections[vote['election_id']] = True
                         utils.save_elec_winner(election_id=vote['election_id'], eround=vote['round'], votes_count=winners[0][1], winner=winners[0][0])
                         if winners[0][0] == env("CORE_PEER_ID") and winners[0][1] > (len(utils.get_voting_peers()) + 1) / 2:
-                            print("MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), vote['election_id']))
+                            message = "MALCONVOTE: Peer {} claiming executor after winning election {}".format(env("CORE_PEER_ID"), vote['election_id'])
+                            print(message)
+                            loop.run_until_complete(utils.send_log(message))        
                             utils.claim_executor(election_id=vote['election_id'], eround=vote['round'], votes=winners[0][1], core_id=env("CORE_PEER_ID"))
                     else:
                         candidates = []
@@ -79,12 +103,18 @@ def votes():
 
                         if total_votes == (len(utils.get_voting_peers()) + 1) and total_votes != 0:
                             elections_rounds[vote['election_id']] += 1
-                            print('MALCONVOTE: Peer {} voted successfully on candidate {} in election {} round {}'.format(env("CORE_PEER_ID"), candidate, vote['election_id'], str(elections_rounds[vote['election_id']])))
+                            message = "MALCONVOTE: Peer {} voted successfully on candidate {} in election {} round {}".format(env("CORE_PEER_ID"), candidate, vote['election_id'], str(elections_rounds[vote['election_id']]))
+                            print(message)
+                            loop.run_until_complete(utils.send_log(message))
                             utils.send_vote(candidate=candidate, election_id=vote['election_id'], eround=elections_rounds[vote['election_id']])
 
 def executors():
     socket = utils.get_socket_connection()
-    print("Listening on MALCONEXEC tag...")
+    message = "Listening on MALCONEXEC tag..."
+    print(message)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(utils.send_log(message))
     while True:
         message = socket.recv()
         data = message.split()
@@ -93,21 +123,31 @@ def executors():
             executor = utils.read_transaction(tx_hash=tx_hash)
             if utils.verify_executor(election_id=executor['election_id'], executor=executor['core_id'], eround=int(executor['round']), votes_count=int(executor['votes'])):
                 if executor['core_id'] != env("CORE_PEER_ID"):
-                    print("MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['core_id']))
+                    message = "MALCONEXEC: Sending {}'s token to {}".format(env("CORE_PEER_ID"), executor['core_id'])
+                    print(message)
+                    loop.run_until_complete(utils.send_log(message))
                     response = utils.send_token(executor=executor['core_id'], election_id=executor['election_id'])
                     if response.status == 200:
-                        print("MALCONEXEC: token has been sent")
+                        message = "MALCONEXEC: token has been sent"
+                        print(message)
+                        loop.run_until_complete(utils.send_log(message))
                 else:
                     token, signature = utils.generate_token()
                     with open(env("CORE_MAIN_PATH") + "/" + env("CORE_PEER_ID") + "_public_key.pem", "r") as f:
                         public_key = f.read()
                     payload = {"token": token, "signature": signature, "issuer": env("CORE_PEER_ID"), "election_id": executor['election_id'], "public_key": public_key}
                     utils.store_token(token=payload, election_id=executor['election_id'])
-                    print("MALCONEXEC: token has been generated")
+                    message = "MALCONEXEC: token has been generated"
+                    print(message)
+                    loop.run_until_complete(utils.send_log(message))
 
 def emergency():
     socket = utils.get_socket_connection()
-    print("Listening on MALCONEMERG tag...")
+    message = "Listening on MALCONEMERG tag..."
+    print(message)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(utils.send_log(message))
     while True:
         message = socket.recv()
         data = message.split()
@@ -116,13 +156,21 @@ def emergency():
             emergency = utils.read_transaction(tx_hash=tx_hash)
             neighbors = utils.get_neighbors()
             if emergency['issuer'] in neighbors:
-                print("MALCONEMERG: Executing emergency strategy...")
+                message = "MALCONEMERG: Executing emergency strategy..."
+                print(message)
+                loop.run_until_complete(utils.send_log(message))
                 response = utils.execute_strategy(ports=emergency['ports'])
-                print("MALCONEMERG: Execution Code = {}".format(str(response)))
+                message = "MALCONEMERG: Execution Code = {}".format(str(response))
+                print(message)
+                loop.run_until_complete(utils.send_log(message))
 
 def broadcasts():
     socket = utils.get_socket_connection()
-    print("Listening on MALCONEXECUTION tag...")
+    message = "Listening on MALCONEXECUTION tag..."
+    print(message)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(utils.send_log(message))
     while True:
         message = socket.recv()
         data = message.split()
