@@ -1,0 +1,3217 @@
+version: '2'
+
+networks:
+  basic:
+
+volumes:
+  mychannel_init_block:
+
+services:
+  ca.example.com:
+    container_name: ca.example.com
+    image: hyperledger/fabric-ca:1.4.8
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.example.com
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.example.com-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+    - "6054:6054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+    - ./crypto-config/ordererOrganizations/example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    networks:
+    - basic
+  
+  ca.org1.example.com:
+    container_name: ca.org1.example.com
+    image: hyperledger/fabric-ca:1.4.8
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.org1.example.com
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+    - "7054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    networks:
+    - basic
+
+  ca.org2.example.com:
+    container_name: ca.org2.example.com
+    image: hyperledger/fabric-ca:1.4.8
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.org2.example.com
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.example.com-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+    - "8054:8054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    networks:
+    - basic
+
+  ca.org3.example.com:
+    container_name: ca.org3.example.com
+    image: hyperledger/fabric-ca:1.4.8
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.org3.example.com
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org3.example.com-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+    - "9054:9054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    networks:
+    - basic
+  
+  orderer.example.com:
+    container_name: orderer.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: orderer-base
+    environment:
+    - CORE_OPERATIONS_LISTENADDRESS=orderer.example.com:9443
+    ports:
+    - 7050:7050
+    - 7052:9443
+    volumes:
+    - ./config/:/etc/hyperledger/configtx
+    - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/etc/hyperledger/orderer/msp
+    - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls:/etc/hyperledger/orderer/tls
+    networks:
+    - basic
+
+
+  peer0.org1.example.com:
+    container_name: peer0.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org1.example.com:44643
+    - CORE_PEER_REDIS_PORT=21276
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1151:7051
+    - 51380:9443
+    - 44643:5000
+    - 21276:21276
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org1.example.com:
+    container_name: peer1.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer1.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org1.example.com:40920
+    - CORE_PEER_REDIS_PORT=22068
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10952:7051
+    - 50696:9443
+    - 40920:5000
+    - 22068:22068
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org1.example.com:
+    container_name: peer2.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer2.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org1.example.com:43476
+    - CORE_PEER_REDIS_PORT=20944
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8763:7051
+    - 56641:9443
+    - 43476:5000
+    - 20944:20944
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer2.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer2.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org1.example.com:
+    container_name: peer3.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer3.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org1.example.com:46234
+    - CORE_PEER_REDIS_PORT=25635
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11962:7051
+    - 57126:9443
+    - 46234:5000
+    - 25635:25635
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer3.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer3.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org1.example.com:
+    container_name: peer4.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer4.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org1.example.com:39399
+    - CORE_PEER_REDIS_PORT=19666
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10073:7051
+    - 48805:9443
+    - 39399:5000
+    - 19666:19666
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer4.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer4.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org1.example.com:
+    container_name: peer5.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer5.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org1.example.com:40171
+    - CORE_PEER_REDIS_PORT=15267
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9599:7051
+    - 54761:9443
+    - 40171:5000
+    - 15267:15267
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer5.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer5.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org1.example.com:
+    container_name: peer6.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer6.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org1.example.com:47294
+    - CORE_PEER_REDIS_PORT=20180
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11913:7051
+    - 49504:9443
+    - 47294:5000
+    - 20180:20180
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer6.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer6.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org1.example.com:
+    container_name: peer7.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer7.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org1.example.com:35381
+    - CORE_PEER_REDIS_PORT=23872
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12893:7051
+    - 49072:9443
+    - 35381:5000
+    - 23872:23872
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer7.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer7.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org1.example.com:
+    container_name: peer8.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer8.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org1.example.com:36676
+    - CORE_PEER_REDIS_PORT=29211
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11638:7051
+    - 55231:9443
+    - 36676:5000
+    - 29211:29211
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer8.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer8.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org1.example.com:
+    container_name: peer9.org1.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org1.example.com
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_ADDRESS=peer9.org1.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org1.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org1.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org1.example.com:39900
+    - CORE_PEER_REDIS_PORT=20091
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11330:7051
+    - 56305:9443
+    - 39900:5000
+    - 20091:20091
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer9.org1.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org1.example.com/peers/peer9.org1.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org2.example.com:
+    container_name: peer0.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer0.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org2.example.com:45313
+    - CORE_PEER_REDIS_PORT=25257
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1251:7051
+    - 54924:9443
+    - 45313:5000
+    - 25257:25257
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org2.example.com:
+    container_name: peer1.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer1.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org2.example.com:35489
+    - CORE_PEER_REDIS_PORT=23801
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11807:7051
+    - 54180:9443
+    - 35489:5000
+    - 23801:23801
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org2.example.com:
+    container_name: peer2.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer2.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org2.example.com:43829
+    - CORE_PEER_REDIS_PORT=23256
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8719:7051
+    - 49015:9443
+    - 43829:5000
+    - 23256:23256
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org2.example.com:
+    container_name: peer3.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer3.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org2.example.com:39537
+    - CORE_PEER_REDIS_PORT=25792
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12326:7051
+    - 49742:9443
+    - 39537:5000
+    - 25792:25792
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer3.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer3.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org2.example.com:
+    container_name: peer4.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer4.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org2.example.com:42897
+    - CORE_PEER_REDIS_PORT=17522
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11991:7051
+    - 50721:9443
+    - 42897:5000
+    - 17522:17522
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer4.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer4.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org2.example.com:
+    container_name: peer5.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer5.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org2.example.com:45414
+    - CORE_PEER_REDIS_PORT=26538
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9764:7051
+    - 52605:9443
+    - 45414:5000
+    - 26538:26538
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer5.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer5.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org2.example.com:
+    container_name: peer6.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer6.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org2.example.com:36278
+    - CORE_PEER_REDIS_PORT=30462
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9574:7051
+    - 48563:9443
+    - 36278:5000
+    - 30462:30462
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer6.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer6.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org2.example.com:
+    container_name: peer7.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer7.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org2.example.com:33356
+    - CORE_PEER_REDIS_PORT=26501
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9453:7051
+    - 51327:9443
+    - 33356:5000
+    - 26501:26501
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer7.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer7.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org2.example.com:
+    container_name: peer8.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer8.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org2.example.com:38434
+    - CORE_PEER_REDIS_PORT=25459
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12937:7051
+    - 52412:9443
+    - 38434:5000
+    - 25459:25459
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer8.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer8.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org2.example.com:
+    container_name: peer9.org2.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org2.example.com
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_ADDRESS=peer9.org2.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org2.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org2.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org2.example.com:43474
+    - CORE_PEER_REDIS_PORT=28739
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11461:7051
+    - 56791:9443
+    - 43474:5000
+    - 28739:28739
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer9.org2.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org2.example.com/peers/peer9.org2.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org2.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org3.example.com:
+    container_name: peer0.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer0.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org3.example.com:37404
+    - CORE_PEER_REDIS_PORT=27922
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1351:7051
+    - 49144:9443
+    - 37404:5000
+    - 27922:27922
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org3.example.com:
+    container_name: peer1.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer1.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org3.example.com:45707
+    - CORE_PEER_REDIS_PORT=22555
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9702:7051
+    - 51967:9443
+    - 45707:5000
+    - 22555:22555
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org3.example.com:
+    container_name: peer2.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer2.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org3.example.com:33304
+    - CORE_PEER_REDIS_PORT=24324
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12081:7051
+    - 48978:9443
+    - 33304:5000
+    - 24324:24324
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer2.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer2.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org3.example.com:
+    container_name: peer3.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer3.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org3.example.com:46361
+    - CORE_PEER_REDIS_PORT=30813
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10486:7051
+    - 55620:9443
+    - 46361:5000
+    - 30813:30813
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer3.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer3.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org3.example.com:
+    container_name: peer4.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer4.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org3.example.com:39565
+    - CORE_PEER_REDIS_PORT=31361
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10702:7051
+    - 51769:9443
+    - 39565:5000
+    - 31361:31361
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer4.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer4.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org3.example.com:
+    container_name: peer5.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer5.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org3.example.com:41644
+    - CORE_PEER_REDIS_PORT=18442
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11775:7051
+    - 52551:9443
+    - 41644:5000
+    - 18442:18442
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer5.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer5.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org3.example.com:
+    container_name: peer6.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer6.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org3.example.com:45289
+    - CORE_PEER_REDIS_PORT=17027
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9759:7051
+    - 57759:9443
+    - 45289:5000
+    - 17027:17027
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer6.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer6.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org3.example.com:
+    container_name: peer7.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer7.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org3.example.com:39645
+    - CORE_PEER_REDIS_PORT=16656
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12657:7051
+    - 53108:9443
+    - 39645:5000
+    - 16656:16656
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer7.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer7.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org3.example.com:
+    container_name: peer8.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer8.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org3.example.com:39168
+    - CORE_PEER_REDIS_PORT=23334
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12670:7051
+    - 56002:9443
+    - 39168:5000
+    - 23334:23334
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer8.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer8.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org3.example.com:
+    container_name: peer9.org3.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org3.example.com
+    - CORE_PEER_LOCALMSPID=Org3MSP
+    - CORE_PEER_ADDRESS=peer9.org3.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org3.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org3.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org3.example.com:46548
+    - CORE_PEER_REDIS_PORT=20594
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8880:7051
+    - 49962:9443
+    - 46548:5000
+    - 20594:20594
+    volumes:
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer9.org3.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org3.example.com/peers/peer9.org3.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org3.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org4.example.com:
+    container_name: peer0.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer0.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org4.example.com:35119
+    - CORE_PEER_REDIS_PORT=26930
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1451:7051
+    - 53055:9443
+    - 35119:5000
+    - 26930:26930
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org4.example.com:
+    container_name: peer1.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer1.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org4.example.com:35124
+    - CORE_PEER_REDIS_PORT=20002
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12357:7051
+    - 50226:9443
+    - 35124:5000
+    - 20002:20002
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer1.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer1.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org4.example.com:
+    container_name: peer2.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer2.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org4.example.com:42415
+    - CORE_PEER_REDIS_PORT=18755
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9070:7051
+    - 48319:9443
+    - 42415:5000
+    - 18755:18755
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer2.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer2.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org4.example.com:
+    container_name: peer3.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer3.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org4.example.com:38112
+    - CORE_PEER_REDIS_PORT=17110
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9592:7051
+    - 55379:9443
+    - 38112:5000
+    - 17110:17110
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer3.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer3.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org4.example.com:
+    container_name: peer4.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer4.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org4.example.com:44230
+    - CORE_PEER_REDIS_PORT=24955
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9185:7051
+    - 53870:9443
+    - 44230:5000
+    - 24955:24955
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer4.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer4.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org4.example.com:
+    container_name: peer5.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer5.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org4.example.com:38115
+    - CORE_PEER_REDIS_PORT=15630
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10701:7051
+    - 51186:9443
+    - 38115:5000
+    - 15630:15630
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer5.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer5.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org4.example.com:
+    container_name: peer6.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer6.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org4.example.com:45615
+    - CORE_PEER_REDIS_PORT=24414
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10428:7051
+    - 56420:9443
+    - 45615:5000
+    - 24414:24414
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer6.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer6.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org4.example.com:
+    container_name: peer7.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer7.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org4.example.com:44394
+    - CORE_PEER_REDIS_PORT=17712
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8747:7051
+    - 55413:9443
+    - 44394:5000
+    - 17712:17712
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer7.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer7.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org4.example.com:
+    container_name: peer8.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer8.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org4.example.com:34529
+    - CORE_PEER_REDIS_PORT=30455
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11779:7051
+    - 57970:9443
+    - 34529:5000
+    - 30455:30455
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer8.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer8.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org4.example.com:
+    container_name: peer9.org4.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org4.example.com
+    - CORE_PEER_LOCALMSPID=Org4MSP
+    - CORE_PEER_ADDRESS=peer9.org4.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org4.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org4.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org4.example.com:42687
+    - CORE_PEER_REDIS_PORT=20993
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8266:7051
+    - 57265:9443
+    - 42687:5000
+    - 20993:20993
+    volumes:
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer9.org4.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org4.example.com/peers/peer9.org4.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org4.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org5.example.com:
+    container_name: peer0.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer0.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org5.example.com:41526
+    - CORE_PEER_REDIS_PORT=32695
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1551:7051
+    - 55589:9443
+    - 41526:5000
+    - 32695:32695
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org5.example.com:
+    container_name: peer1.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer1.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org5.example.com:45345
+    - CORE_PEER_REDIS_PORT=16342
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8694:7051
+    - 57664:9443
+    - 45345:5000
+    - 16342:16342
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer1.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer1.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org5.example.com:
+    container_name: peer2.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer2.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org5.example.com:38635
+    - CORE_PEER_REDIS_PORT=30565
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10524:7051
+    - 52642:9443
+    - 38635:5000
+    - 30565:30565
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer2.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer2.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org5.example.com:
+    container_name: peer3.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer3.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org5.example.com:45750
+    - CORE_PEER_REDIS_PORT=28023
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8199:7051
+    - 50059:9443
+    - 45750:5000
+    - 28023:28023
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer3.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer3.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org5.example.com:
+    container_name: peer4.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer4.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org5.example.com:41642
+    - CORE_PEER_REDIS_PORT=25109
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11725:7051
+    - 51498:9443
+    - 41642:5000
+    - 25109:25109
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer4.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer4.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org5.example.com:
+    container_name: peer5.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer5.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org5.example.com:46467
+    - CORE_PEER_REDIS_PORT=14960
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11803:7051
+    - 53296:9443
+    - 46467:5000
+    - 14960:14960
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer5.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer5.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org5.example.com:
+    container_name: peer6.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer6.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org5.example.com:33994
+    - CORE_PEER_REDIS_PORT=20380
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10134:7051
+    - 51644:9443
+    - 33994:5000
+    - 20380:20380
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer6.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer6.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org5.example.com:
+    container_name: peer7.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer7.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org5.example.com:42615
+    - CORE_PEER_REDIS_PORT=27296
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11901:7051
+    - 48516:9443
+    - 42615:5000
+    - 27296:27296
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer7.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer7.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org5.example.com:
+    container_name: peer8.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer8.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org5.example.com:47095
+    - CORE_PEER_REDIS_PORT=28898
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12207:7051
+    - 52022:9443
+    - 47095:5000
+    - 28898:28898
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer8.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer8.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org5.example.com:
+    container_name: peer9.org5.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org5.example.com
+    - CORE_PEER_LOCALMSPID=Org5MSP
+    - CORE_PEER_ADDRESS=peer9.org5.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org5.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org5.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org5.example.com:34026
+    - CORE_PEER_REDIS_PORT=23600
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11041:7051
+    - 52433:9443
+    - 34026:5000
+    - 23600:23600
+    volumes:
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer9.org5.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org5.example.com/peers/peer9.org5.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org5.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org6.example.com:
+    container_name: peer0.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer0.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org6.example.com:47445
+    - CORE_PEER_REDIS_PORT=20816
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1651:7051
+    - 48036:9443
+    - 47445:5000
+    - 20816:20816
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer0.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer0.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org6.example.com:
+    container_name: peer1.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer1.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org6.example.com:43416
+    - CORE_PEER_REDIS_PORT=29063
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12046:7051
+    - 52209:9443
+    - 43416:5000
+    - 29063:29063
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer1.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer1.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org6.example.com:
+    container_name: peer2.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer2.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org6.example.com:36255
+    - CORE_PEER_REDIS_PORT=27470
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10333:7051
+    - 57727:9443
+    - 36255:5000
+    - 27470:27470
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer2.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer2.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org6.example.com:
+    container_name: peer3.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer3.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org6.example.com:39182
+    - CORE_PEER_REDIS_PORT=15571
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10927:7051
+    - 56953:9443
+    - 39182:5000
+    - 15571:15571
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer3.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer3.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org6.example.com:
+    container_name: peer4.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer4.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org6.example.com:34771
+    - CORE_PEER_REDIS_PORT=15531
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10579:7051
+    - 51778:9443
+    - 34771:5000
+    - 15531:15531
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer4.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer4.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org6.example.com:
+    container_name: peer5.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer5.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org6.example.com:45217
+    - CORE_PEER_REDIS_PORT=19422
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10229:7051
+    - 49387:9443
+    - 45217:5000
+    - 19422:19422
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer5.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer5.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org6.example.com:
+    container_name: peer6.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer6.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org6.example.com:38595
+    - CORE_PEER_REDIS_PORT=29035
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12943:7051
+    - 51331:9443
+    - 38595:5000
+    - 29035:29035
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer6.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer6.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org6.example.com:
+    container_name: peer7.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer7.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org6.example.com:47152
+    - CORE_PEER_REDIS_PORT=26391
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10487:7051
+    - 55251:9443
+    - 47152:5000
+    - 26391:26391
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer7.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer7.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org6.example.com:
+    container_name: peer8.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer8.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org6.example.com:33585
+    - CORE_PEER_REDIS_PORT=13640
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8167:7051
+    - 57064:9443
+    - 33585:5000
+    - 13640:13640
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer8.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer8.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org6.example.com:
+    container_name: peer9.org6.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org6.example.com
+    - CORE_PEER_LOCALMSPID=Org6MSP
+    - CORE_PEER_ADDRESS=peer9.org6.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org6.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org6.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org6.example.com:33338
+    - CORE_PEER_REDIS_PORT=13291
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9651:7051
+    - 57388:9443
+    - 33338:5000
+    - 13291:13291
+    volumes:
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer9.org6.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org6.example.com/peers/peer9.org6.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org6.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org7.example.com:
+    container_name: peer0.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer0.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org7.example.com:46851
+    - CORE_PEER_REDIS_PORT=31043
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1751:7051
+    - 51365:9443
+    - 46851:5000
+    - 31043:31043
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer0.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer0.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org7.example.com:
+    container_name: peer1.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer1.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org7.example.com:45525
+    - CORE_PEER_REDIS_PORT=16920
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10847:7051
+    - 51925:9443
+    - 45525:5000
+    - 16920:16920
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer1.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer1.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org7.example.com:
+    container_name: peer2.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer2.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org7.example.com:43389
+    - CORE_PEER_REDIS_PORT=17798
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8630:7051
+    - 52441:9443
+    - 43389:5000
+    - 17798:17798
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer2.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer2.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org7.example.com:
+    container_name: peer3.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer3.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org7.example.com:45223
+    - CORE_PEER_REDIS_PORT=26687
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12165:7051
+    - 55739:9443
+    - 45223:5000
+    - 26687:26687
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer3.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer3.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org7.example.com:
+    container_name: peer4.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer4.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org7.example.com:37177
+    - CORE_PEER_REDIS_PORT=17987
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10932:7051
+    - 55565:9443
+    - 37177:5000
+    - 17987:17987
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer4.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer4.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org7.example.com:
+    container_name: peer5.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer5.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org7.example.com:35345
+    - CORE_PEER_REDIS_PORT=23998
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12478:7051
+    - 57171:9443
+    - 35345:5000
+    - 23998:23998
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer5.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer5.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org7.example.com:
+    container_name: peer6.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer6.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org7.example.com:46142
+    - CORE_PEER_REDIS_PORT=23502
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10226:7051
+    - 52649:9443
+    - 46142:5000
+    - 23502:23502
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer6.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer6.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org7.example.com:
+    container_name: peer7.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer7.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org7.example.com:47243
+    - CORE_PEER_REDIS_PORT=18290
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11806:7051
+    - 57744:9443
+    - 47243:5000
+    - 18290:18290
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer7.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer7.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org7.example.com:
+    container_name: peer8.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer8.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org7.example.com:40023
+    - CORE_PEER_REDIS_PORT=14797
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8636:7051
+    - 49026:9443
+    - 40023:5000
+    - 14797:14797
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer8.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer8.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org7.example.com:
+    container_name: peer9.org7.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org7.example.com
+    - CORE_PEER_LOCALMSPID=Org7MSP
+    - CORE_PEER_ADDRESS=peer9.org7.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org7.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org7.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org7.example.com:33049
+    - CORE_PEER_REDIS_PORT=21867
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11292:7051
+    - 53081:9443
+    - 33049:5000
+    - 21867:21867
+    volumes:
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer9.org7.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org7.example.com/peers/peer9.org7.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org7.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org8.example.com:
+    container_name: peer0.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer0.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org8.example.com:37558
+    - CORE_PEER_REDIS_PORT=32168
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1851:7051
+    - 54945:9443
+    - 37558:5000
+    - 32168:32168
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer0.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer0.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org8.example.com:
+    container_name: peer1.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer1.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org8.example.com:36383
+    - CORE_PEER_REDIS_PORT=25023
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8044:7051
+    - 54346:9443
+    - 36383:5000
+    - 25023:25023
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer1.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer1.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org8.example.com:
+    container_name: peer2.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer2.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org8.example.com:44576
+    - CORE_PEER_REDIS_PORT=22472
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12680:7051
+    - 53032:9443
+    - 44576:5000
+    - 22472:22472
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer2.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer2.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org8.example.com:
+    container_name: peer3.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer3.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org8.example.com:39365
+    - CORE_PEER_REDIS_PORT=31389
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9190:7051
+    - 49311:9443
+    - 39365:5000
+    - 31389:31389
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer3.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer3.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org8.example.com:
+    container_name: peer4.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer4.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org8.example.com:41265
+    - CORE_PEER_REDIS_PORT=22512
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11764:7051
+    - 48930:9443
+    - 41265:5000
+    - 22512:22512
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer4.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer4.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org8.example.com:
+    container_name: peer5.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer5.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org8.example.com:41512
+    - CORE_PEER_REDIS_PORT=14601
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8800:7051
+    - 55617:9443
+    - 41512:5000
+    - 14601:14601
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer5.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer5.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org8.example.com:
+    container_name: peer6.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer6.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org8.example.com:39104
+    - CORE_PEER_REDIS_PORT=24723
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12547:7051
+    - 56652:9443
+    - 39104:5000
+    - 24723:24723
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer6.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer6.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org8.example.com:
+    container_name: peer7.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer7.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org8.example.com:36585
+    - CORE_PEER_REDIS_PORT=30044
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11361:7051
+    - 48386:9443
+    - 36585:5000
+    - 30044:30044
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer7.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer7.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org8.example.com:
+    container_name: peer8.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer8.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org8.example.com:40466
+    - CORE_PEER_REDIS_PORT=31496
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12489:7051
+    - 57685:9443
+    - 40466:5000
+    - 31496:31496
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer8.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer8.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org8.example.com:
+    container_name: peer9.org8.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org8.example.com
+    - CORE_PEER_LOCALMSPID=Org8MSP
+    - CORE_PEER_ADDRESS=peer9.org8.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org8.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org8.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org8.example.com:33411
+    - CORE_PEER_REDIS_PORT=30888
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8486:7051
+    - 55258:9443
+    - 33411:5000
+    - 30888:30888
+    volumes:
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer9.org8.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org8.example.com/peers/peer9.org8.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org8.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org9.example.com:
+    container_name: peer0.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer0.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org9.example.com:35082
+    - CORE_PEER_REDIS_PORT=28196
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1951:7051
+    - 49209:9443
+    - 35082:5000
+    - 28196:28196
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer0.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer0.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org9.example.com:
+    container_name: peer1.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer1.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org9.example.com:41579
+    - CORE_PEER_REDIS_PORT=21399
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10638:7051
+    - 51913:9443
+    - 41579:5000
+    - 21399:21399
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer1.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer1.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org9.example.com:
+    container_name: peer2.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer2.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org9.example.com:39669
+    - CORE_PEER_REDIS_PORT=26642
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10635:7051
+    - 55376:9443
+    - 39669:5000
+    - 26642:26642
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer2.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer2.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org9.example.com:
+    container_name: peer3.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer3.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org9.example.com:44348
+    - CORE_PEER_REDIS_PORT=25557
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8079:7051
+    - 56770:9443
+    - 44348:5000
+    - 25557:25557
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer3.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer3.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org9.example.com:
+    container_name: peer4.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer4.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org9.example.com:35157
+    - CORE_PEER_REDIS_PORT=25220
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11003:7051
+    - 49880:9443
+    - 35157:5000
+    - 25220:25220
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer4.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer4.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org9.example.com:
+    container_name: peer5.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer5.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org9.example.com:33520
+    - CORE_PEER_REDIS_PORT=26785
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8138:7051
+    - 51878:9443
+    - 33520:5000
+    - 26785:26785
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer5.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer5.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org9.example.com:
+    container_name: peer6.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer6.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org9.example.com:43624
+    - CORE_PEER_REDIS_PORT=15716
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8886:7051
+    - 52528:9443
+    - 43624:5000
+    - 15716:15716
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer6.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer6.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org9.example.com:
+    container_name: peer7.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer7.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org9.example.com:35265
+    - CORE_PEER_REDIS_PORT=16365
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9950:7051
+    - 56333:9443
+    - 35265:5000
+    - 16365:16365
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer7.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer7.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org9.example.com:
+    container_name: peer8.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer8.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org9.example.com:35572
+    - CORE_PEER_REDIS_PORT=13021
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 12846:7051
+    - 52096:9443
+    - 35572:5000
+    - 13021:13021
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer8.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer8.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org9.example.com:
+    container_name: peer9.org9.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org9.example.com
+    - CORE_PEER_LOCALMSPID=Org9MSP
+    - CORE_PEER_ADDRESS=peer9.org9.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org9.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org9.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org9.example.com:43610
+    - CORE_PEER_REDIS_PORT=22324
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11128:7051
+    - 57154:9443
+    - 43610:5000
+    - 22324:22324
+    volumes:
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer9.org9.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org9.example.com/peers/peer9.org9.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org9.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer0.org10.example.com:
+    container_name: peer0.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer0.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer0.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer0.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer0.org10.example.com:40826
+    - CORE_PEER_REDIS_PORT=21489
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 1051:7051
+    - 56702:9443
+    - 40826:5000
+    - 21489:21489
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer0.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer0.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../adminclient/:/client
+    - ./../core/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer1.org10.example.com:
+    container_name: peer1.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer1.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer1.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer1.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer1.org10.example.com:36803
+    - CORE_PEER_REDIS_PORT=24310
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9981:7051
+    - 51185:9443
+    - 36803:5000
+    - 24310:24310
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer1.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer1.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer2.org10.example.com:
+    container_name: peer2.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer2.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer2.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer2.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer2.org10.example.com:42562
+    - CORE_PEER_REDIS_PORT=22836
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9553:7051
+    - 48584:9443
+    - 42562:5000
+    - 22836:22836
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer2.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer2.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer3.org10.example.com:
+    container_name: peer3.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer3.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer3.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer3.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer3.org10.example.com:40670
+    - CORE_PEER_REDIS_PORT=15076
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9436:7051
+    - 52400:9443
+    - 40670:5000
+    - 15076:15076
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer3.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer3.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer4.org10.example.com:
+    container_name: peer4.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer4.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer4.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer4.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer4.org10.example.com:41988
+    - CORE_PEER_REDIS_PORT=15645
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9036:7051
+    - 54767:9443
+    - 41988:5000
+    - 15645:15645
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer4.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer4.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer5.org10.example.com:
+    container_name: peer5.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer5.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer5.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer5.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer5.org10.example.com:45625
+    - CORE_PEER_REDIS_PORT=25371
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 11590:7051
+    - 50837:9443
+    - 45625:5000
+    - 25371:25371
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer5.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer5.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer6.org10.example.com:
+    container_name: peer6.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer6.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer6.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer6.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer6.org10.example.com:33491
+    - CORE_PEER_REDIS_PORT=16618
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10761:7051
+    - 57757:9443
+    - 33491:5000
+    - 16618:16618
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer6.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer6.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer7.org10.example.com:
+    container_name: peer7.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer7.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer7.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer7.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer7.org10.example.com:39991
+    - CORE_PEER_REDIS_PORT=25708
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 9524:7051
+    - 55089:9443
+    - 39991:5000
+    - 25708:25708
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer7.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer7.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer8.org10.example.com:
+    container_name: peer8.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer8.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer8.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer8.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer8.org10.example.com:47259
+    - CORE_PEER_REDIS_PORT=21890
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 10411:7051
+    - 49636:9443
+    - 47259:5000
+    - 21890:21890
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer8.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer8.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  peer9.org10.example.com:
+    container_name: peer9.org10.example.com
+    extends:
+      file: docker-compose-base.yml
+      service: peer-base
+    environment:
+    - CORE_PEER_ID=peer9.org10.example.com
+    - CORE_PEER_LOCALMSPID=Org10MSP
+    - CORE_PEER_ADDRESS=peer9.org10.example.com:7051
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org10.example.com:7051
+    - CORE_OPERATIONS_LISTENADDRESS=peer9.org10.example.com:9443
+    - CORE_PEER_ENDPOINT=peer9.org10.example.com:45285
+    - CORE_PEER_REDIS_PORT=13133
+    - CORE_PEER_NEIGHBORS=neighbors
+    ports:
+    - 8207:7051
+    - 55695:9443
+    - 45285:5000
+    - 13133:13133
+    volumes:
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer9.org10.example.com/msp:/etc/hyperledger/peer/msp
+    - ./crypto-config/peerOrganizations/org10.example.com/peers/peer9.org10.example.com/tls:/etc/hyperledger/peer/tls
+    - ./crypto-config/peerOrganizations/org10.example.com/users:/etc/hyperledger/users
+    - ./../peerclient/:/client
+    - ./../core_path/:/core
+    depends_on:
+    - orderer.example.com
+    networks:
+    - basic
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:2.0
+    tty: true
+    environment:
+    - GOPATH=/opt/gopath
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - FABRIC_LOGGING_SPEC=INFO
+    - CORE_PEER_ID=cli
+    - CORE_CHAINCODE_KEEPALIVE=10
+    # TLS
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+    - CORE_PEER_MSPCONFIGPATH=/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    command: /bin/bash
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./../chaincodes/malwarecc:/opt/gopath/src/malcon/chaincodes/malwarecc
+    - ./../chaincodes/pubkeycc:/opt/gopath/src/malcon/chaincodes/pubkeycc
+    - ./../chaincodes/strategycc:/opt/gopath/src/malcon/chaincodes/strategycc
+    - ./../:/opt/gopath/src/malcon/
+    networks:
+    - basic
+    depends_on:
+    - peer0.org1.example.com
+    - peer1.org1.example.com
+    - peer2.org1.example.com
+    - peer3.org1.example.com
+    - peer4.org1.example.com
+    - peer5.org1.example.com
+    - peer6.org1.example.com
+    - peer7.org1.example.com
+    - peer8.org1.example.com
+    - peer9.org1.example.com
+    - peer0.org2.example.com
+    - peer1.org2.example.com
+    - peer2.org2.example.com
+    - peer3.org2.example.com
+    - peer4.org2.example.com
+    - peer5.org2.example.com
+    - peer6.org2.example.com
+    - peer7.org2.example.com
+    - peer8.org2.example.com
+    - peer9.org2.example.com
+    - peer0.org3.example.com
+    - peer1.org3.example.com
+    - peer2.org3.example.com
+    - peer3.org3.example.com
+    - peer4.org3.example.com
+    - peer5.org3.example.com
+    - peer6.org3.example.com
+    - peer7.org3.example.com
+    - peer8.org3.example.com
+    - peer9.org3.example.com
+    - peer0.org4.example.com
+    - peer1.org4.example.com
+    - peer2.org4.example.com
+    - peer3.org4.example.com
+    - peer4.org4.example.com
+    - peer5.org4.example.com
+    - peer6.org4.example.com
+    - peer7.org4.example.com
+    - peer8.org4.example.com
+    - peer9.org4.example.com
+    - peer0.org5.example.com
+    - peer1.org5.example.com
+    - peer2.org5.example.com
+    - peer3.org5.example.com
+    - peer4.org5.example.com
+    - peer5.org5.example.com
+    - peer6.org5.example.com
+    - peer7.org5.example.com
+    - peer8.org5.example.com
+    - peer9.org5.example.com
+    - peer0.org6.example.com
+    - peer1.org6.example.com
+    - peer2.org6.example.com
+    - peer3.org6.example.com
+    - peer4.org6.example.com
+    - peer5.org6.example.com
+    - peer6.org6.example.com
+    - peer7.org6.example.com
+    - peer8.org6.example.com
+    - peer9.org6.example.com
+    - peer0.org7.example.com
+    - peer1.org7.example.com
+    - peer2.org7.example.com
+    - peer3.org7.example.com
+    - peer4.org7.example.com
+    - peer5.org7.example.com
+    - peer6.org7.example.com
+    - peer7.org7.example.com
+    - peer8.org7.example.com
+    - peer9.org7.example.com
+    - peer0.org8.example.com
+    - peer1.org8.example.com
+    - peer2.org8.example.com
+    - peer3.org8.example.com
+    - peer4.org8.example.com
+    - peer5.org8.example.com
+    - peer6.org8.example.com
+    - peer7.org8.example.com
+    - peer8.org8.example.com
+    - peer9.org8.example.com
+    - peer0.org9.example.com
+    - peer1.org9.example.com
+    - peer2.org9.example.com
+    - peer3.org9.example.com
+    - peer4.org9.example.com
+    - peer5.org9.example.com
+    - peer6.org9.example.com
+    - peer7.org9.example.com
+    - peer8.org9.example.com
+    - peer9.org9.example.com
+    - peer0.org10.example.com
+    - peer1.org10.example.com
+    - peer2.org10.example.com
+    - peer3.org10.example.com
+    - peer4.org10.example.com
+    - peer5.org10.example.com
+    - peer6.org10.example.com
+    - peer7.org10.example.com
+    - peer8.org10.example.com
+    - peer9.org10.example.com
