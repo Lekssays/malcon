@@ -3,6 +3,24 @@ import argparse
 import json
 import random
 
+REDIS_PORTS = []
+WEB_PORTS = []
+OPERATIONS_PORTS = []
+GOSSIP_PORTS = []
+
+def generate_random_ports():
+    for i in range(8000, 13000):
+        GOSSIP_PORTS.append(i)
+
+    for i in range(13001, 33000):
+        REDIS_PORTS.append(i)
+
+    for i in range(33001, 48000):
+        WEB_PORTS.append(i)
+
+    for i in range(48001, 58000):
+        OPERATIONS_PORTS.append(i)    
+
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-o', '--orgs',
@@ -40,20 +58,21 @@ def generate_ports(peers: list) -> list:
     # TODO: check for collisions
     peers_ports = []
     for peer in peers:
+        redis_port = REDIS_PORTS[random.randint(0, len(REDIS_PORTS) - 1)]
+        REDIS_PORTS.remove(redis_port)
+        web_port = WEB_PORTS[random.randint(0, len(WEB_PORTS) - 1)]
+        WEB_PORTS.remove(web_port)
+        gossip_port = GOSSIP_PORTS[random.randint(0, len(GOSSIP_PORTS) - 1)]
+        GOSSIP_PORTS.remove(gossip_port)
+        operations_port = OPERATIONS_PORTS[random.randint(0, len(OPERATIONS_PORTS) - 1)]
+        OPERATIONS_PORTS.remove(operations_port)
         peer_dict = {
             'peer': peer,
             'ports': {
-<<<<<<< HEAD
-                'redis': random.randint(18000, 27999),
-                'web': random.randint(28000, 37999),
-                'gossip': int("1" + get_org_id(peer=peer) + "51") if is_admin(peer=peer) else random.randint(8000, 17999),
-                'operations': random.randint(38000, 47999)
-=======
-                'redis': random.randint(13001, 32999),
-                'web': random.randint(33000, 48000),
-                'gossip': int("1" + get_org_id(peer=peer) + "51") if is_admin(peer=peer) else random.randint(8000, 13000),
-                'operations': random.randint(48001, 58000)
->>>>>>> add config to 10 orgs
+                'redis': redis_port,
+                'web': web_port,
+                'gossip': int("1" + get_org_id(peer=peer) + "51") if is_admin(peer=peer) else gossip_port,
+                'operations': operations_port
             }
         }
         peers_ports.append(peer_dict)
@@ -146,6 +165,8 @@ def main():
     print("Config generator for malcon experiments")
     orgs = int(parse_args().orgs)
     peers = int(parse_args().peers)
+
+    generate_random_ports()
 
     peers_list = generate_peers(orgs=orgs, peers=peers)
     peers_ports = generate_ports(peers=peers_list)

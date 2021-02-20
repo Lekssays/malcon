@@ -152,6 +152,14 @@ function runGateways() {
   done
 }
 
+function killGateways() {
+  for orgId in $(seq $ORGS);
+  do
+    echo "killing gateway on peer0.org$orgId.example.com..."
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "pkill -f 'python3 /core/gateway.py'"  
+  done
+}
+
 function createChannel() {
   setVariables 1
   
@@ -315,6 +323,8 @@ elif [ "${MODE}" == "runEndpoints" ]; then
   runEndpoints
 elif [ "${MODE}" == "runGateways" ]; then
   runGateways
+elif [ "${MODE}" == "killGateways" ]; then
+  killGateways
 else
   printHelp
   exit 1
