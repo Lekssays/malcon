@@ -31,7 +31,7 @@ env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
 async def send_log(message: str):
-    uri = "ws://172.17.0.1:8765"
+    uri = "ws://172.17.0.1:7777"
     now = datetime.datetime.now()
     dt = now.strftime("%d/%m/%Y %H:%M:%S")
     message = dt + " - [" + env("CORE_PEER_ID") + "] " + message

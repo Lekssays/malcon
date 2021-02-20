@@ -43,10 +43,10 @@ def generate_ports(peers: list) -> list:
         peer_dict = {
             'peer': peer,
             'ports': {
-                'redis': random.randint(11000, 22000),
-                'web': random.randint(33000, 44000),
-                'gossip': int("1" + get_org_id(peer=peer) + "51") if is_admin(peer=peer) else random.randint(8000, 10999),
-                'operations': random.randint(33000, 44000)
+                'redis': random.randint(18000, 27999),
+                'web': random.randint(28000, 37999),
+                'gossip': int("1" + get_org_id(peer=peer) + "51") if is_admin(peer=peer) else random.randint(8000, 17999),
+                'operations': random.randint(38000, 47999)
             }
         }
         peers_ports.append(peer_dict)

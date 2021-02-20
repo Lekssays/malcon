@@ -304,8 +304,8 @@ elif [ "${MODE}" == "up" ]; then
   cd ./tests/
   python3 health_check.py
   cd ..
-  # sleep 3
-  # runGateways
+  sleep 3
+  runGateways
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
 elif [ "${MODE}" == "deployW" ]; then

@@ -19,3 +19,4 @@ test.py
 docker_compose_test.yml 
 tests/peers_ports.json
 core/peers_ports.json
+network/docker-compose.yml

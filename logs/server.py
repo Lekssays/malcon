@@ -2,11 +2,17 @@
 import asyncio
 import websockets
 
+def write(entry: str):
+    f = open("system.log", "a")
+    f.write(entry + "\n")
+    f.close()
+
 async def hello(websocket, path):
     message = await websocket.recv()
     print(message)
+    write(entry=message)
 
-start_server = websockets.serve(hello, "0.0.0.0", 8765)
+start_server = websockets.serve(hello, "0.0.0.0", 7777)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
