@@ -280,13 +280,6 @@ elif [ "${MODE}" == "clear" ]; then
   clearNetwork
 elif [ "${MODE}" == "up" ]; then
   restartNetwork
-  sleep 2
-  cd ./tests/
-  python3 generator.py -o $ORGS -p $PEERS
-  cd ..
-  sleep 2
-  cp ./tests/docker_compose_test.yml ./network/docker-compose.yml 
-  cp ./tests/peers_ports.json ./core/peers_ports.json
   sleep 3
   generateBlocks
   sleep 2

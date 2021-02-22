@@ -57,7 +57,6 @@ def is_admin(peer: str):
     return False
 
 def generate_ports(peers: list) -> list:
-    # TODO: check for collisions
     peers_ports = []
     for peer in peers:
         redis_port = REDIS_PORTS[random.randint(0, len(REDIS_PORTS) - 1)]
