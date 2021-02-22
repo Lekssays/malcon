@@ -102,7 +102,7 @@ services:
     - CORE_PEER_ENDPOINT=peer0.org1.example.com:10010
     - CORE_PEER_REDIS_PORT=11010
     ports:
-    - 7051:7051
+    - 1151:7051
     - 7053:9443
     - 10010:5000
     - 11010:11010
@@ -160,7 +160,7 @@ services:
     - CORE_PEER_ENDPOINT=peer0.org2.example.com:10020
     - CORE_PEER_REDIS_PORT=11020
     ports:
-    - 8051:7051
+    - 1251:7051
     - 8053:9443
     - 10020:5000
     - 11020:11020
@@ -218,7 +218,7 @@ services:
     - CORE_PEER_ENDPOINT=peer0.org3.example.com:10030
     - CORE_PEER_REDIS_PORT=11030
     ports:
-    - 9051:7051
+    - 1351:7051
     - 9053:9443
     - 10030:5000
     - 11030:11030
