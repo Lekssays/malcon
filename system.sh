@@ -22,8 +22,8 @@ export CCVERSION=1.0
 export CHANNEL_NAME=mychannel
 
 # TODO: CHANGE THIS
-ORGS=10
-PEERS=10
+ORGS=3
+PEERS=2
 
 script_path=`dirname "$0"`
 

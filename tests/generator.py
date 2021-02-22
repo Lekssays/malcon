@@ -3,6 +3,8 @@ import argparse
 import json
 import random
 
+from collections import defaultdict
+
 REDIS_PORTS = []
 WEB_PORTS = []
 OPERATIONS_PORTS = []
@@ -83,7 +85,6 @@ def save(peers_ports: list):
         json.dump(peers_ports , f)
 
 def get_redis_port(peer: str, peers_ports: list):
-    port = ""
     for e in peers_ports:
         if e['peer'] == peer:
             return str(e['ports']['redis'])
@@ -114,8 +115,39 @@ def get_org_msp(peer: str):
     org = org.capitalize() + "MSP"
     return org
 
-def generate_docker_configs(peers_ports: list) -> list:
-    # TODO: generate neighbors
+def get_orgs_peers(peers: list) -> defaultdict:
+    org_peers = defaultdict(list)
+    for peer in peers:
+        p_org = get_org(peer=peer)
+        org_peers[p_org].append(peer)
+    return org_peers
+
+def generate_neighbors(peers: list, topology: str, org_peers: defaultdict):
+    neighbors = defaultdict(list)
+    bucket = peers
+    if topology == "SR":
+        for peer in peers:
+            org = get_org(peer=peer)
+            admin = "peer0." + org + ".example.com"
+            if admin == peer:
+                continue
+            neighbors[peer].append(admin)
+    elif topology == "FC":
+        orgs = list(org_peers.keys())
+        for org in orgs:
+            for peer in org_peers[org]:
+                neighbors[peer] = org_peers[org]
+
+    elif topology == "M":
+        for peer in peers:
+            for i in range(1, random.randint(1, 7)):
+                t_peer = bucket[random.randint(0, len(bucket) - 1)]
+                neighbors[peer].append(t_peer)
+                neighbors[t_peer].append(peer)
+                bucket.remove(t_peer)
+    return neighbors
+
+def generate_docker_configs(peers_ports: list, neighbors: defaultdict) -> list:
     configs = []
     peers = []
     base_filename = "./templates/peer_template.yaml"
@@ -129,6 +161,7 @@ def generate_docker_configs(peers_ports: list) -> list:
         content = content.replace("operations_port", str(e['ports']['operations']))
         content = content.replace("org_id", get_org(peer=e['peer']))
         content = content.replace("org_msp", get_org_msp(peer=e['peer']))
+        content = content.replace("neighbors", ",".join(neighbors[e['peer']]))
         if is_admin(peer=e['peer']):
             content = content.replace("client_path", "adminclient")
             content = content.replace("core_path", "core")
@@ -169,11 +202,14 @@ def main():
     generate_random_ports()
 
     peers_list = generate_peers(orgs=orgs, peers=peers)
+   
+    neighbors = generate_neighbors(peers=peers_list, org_peers=get_orgs_peers(peers=peers_list), topology="M")
+    
     peers_ports = generate_ports(peers=peers_list)
     save(peers_ports=peers_ports)
 
     generate_redis_config(peers_ports=peers_ports)
-    configs, peers = generate_docker_configs(peers_ports=peers_ports)
+    configs, peers = generate_docker_configs(peers_ports=peers_ports, neighbors=neighbors)
     generate_docker_compose(configs=configs, peers=peers)
 
 if __name__ == "__main__":

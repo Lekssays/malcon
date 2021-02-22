@@ -7,7 +7,6 @@ import redis
 import subprocess
 import urllib3
 
-from collections import defaultdict
 from Crypto.PublicKey import RSA
 from environs import Env
 from hashlib import sha512
@@ -67,7 +66,6 @@ def prepare_payload(election_id: str):
 
 def get_target_peer(election_id: str) -> str:
     elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
-    target_peer = ""
     for election in elections:
         if election.timestamp >= 1609455600:
             election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
