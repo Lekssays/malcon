@@ -138,12 +138,18 @@ def generate_neighbors(peers: list, topology: str, org_peers: defaultdict):
                 neighbors[peer] = org_peers[org]
 
     elif topology == "M":
+        limit = len(peers) if len(peers) <= 7 else 7
         for peer in peers:
-            for i in range(1, random.randint(1, 7)):
+            for _ in range(1, random.randint(1, limit)):
                 t_peer = bucket[random.randint(0, len(bucket) - 1)]
-                neighbors[peer].append(t_peer)
-                neighbors[t_peer].append(peer)
-                bucket.remove(t_peer)
+                if t_peer != peer:
+                    neighbors[peer].append(t_peer)
+                    neighbors[t_peer].append(peer)
+                    bucket.remove(t_peer)
+    
+    with open('neighbors.json', 'w') as f:
+        json.dump(neighbors , f)
+    
     return neighbors
 
 def generate_docker_configs(peers_ports: list, neighbors: defaultdict) -> list:

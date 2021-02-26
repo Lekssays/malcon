@@ -12,11 +12,10 @@ address.txt
 *.rd.conf
 helper.txt
 .DS_Store
-peerclient/kitkat.dark.mal
+*.mal
 .vscode/
 *.tar
 test.py
 docker_compose_test.yml 
-tests/peers_ports.json
-core/peers_ports.json
 network/docker-compose.yml
+*.json
