@@ -123,7 +123,8 @@ def get_orgs_peers(peers: list) -> defaultdict:
 
 def generate_neighbors(peers: list, topology: str, org_peers: defaultdict):
     neighbors = defaultdict(list)
-    bucket = peers
+    bucket = peers.copy()
+
     if topology == "SR":
         for peer in peers:
             org = get_org(peer=peer)
@@ -141,11 +142,12 @@ def generate_neighbors(peers: list, topology: str, org_peers: defaultdict):
         limit = len(peers) if len(peers) <= 7 else 7
         for peer in peers:
             for _ in range(1, random.randint(1, limit)):
-                t_peer = bucket[random.randint(0, len(bucket) - 1)]
-                if t_peer != peer:
-                    neighbors[peer].append(t_peer)
-                    neighbors[t_peer].append(peer)
-                    bucket.remove(t_peer)
+                if len(bucket) > 0:
+                    t_peer = bucket[random.randint(0, len(bucket) - 1)]
+                    if t_peer != peer:
+                        neighbors[peer].append(t_peer)
+                        neighbors[t_peer].append(peer)
+                        bucket.remove(t_peer)
     
     with open('neighbors.json', 'w') as f:
         json.dump(neighbors , f)
@@ -207,9 +209,9 @@ def main():
     generate_random_ports()
 
     peers_list = generate_peers(orgs=orgs, peers=peers)
-   
+
     neighbors = generate_neighbors(peers=peers_list, org_peers=get_orgs_peers(peers=peers_list), topology="M")
-    
+
     peers_ports = generate_ports(peers=peers_list)
     save(peers_ports=peers_ports)
 
