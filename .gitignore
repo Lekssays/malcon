@@ -7,8 +7,8 @@ network/crypto-config/
 **/node_modules/
 **/wallet/
 **/__pycache__
-seed.txt
-address.txt
+*seed.txt
+*address.txt
 *.rd.conf
 helper.txt
 .DS_Store

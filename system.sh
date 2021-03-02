@@ -152,6 +152,27 @@ function runGateways() {
   done
 }
 
+function startTelnet() {
+  for orgId in $(seq $ORGS);
+  do
+    for ((peerId=0; peerId<$PEERS; peerId++));
+    do
+      echo "Running telnet daemon on peer$peerId.org$orgId.example.com..."
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "telnetd -l /bin/login"
+    done
+  done
+}
+
+function setAdminPasswords() {
+  # Strong passwords for admins
+  for orgId in $(seq $ORGS);
+  do
+    echo "Setting up admin password on peer0.org$orgId.example.com..."
+    PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13 ; echo '')
+    docker exec -d peer0.org$orgId.example.com /bin/sh -c "(echo $PASSWORD; echo $PASSWORD) | passwd admin"  
+  done
+}
+
 function killGateways() {
   for orgId in $(seq $ORGS);
   do
@@ -280,6 +301,10 @@ elif [ "${MODE}" == "clear" ]; then
   clearNetwork
 elif [ "${MODE}" == "up" ]; then
   restartNetwork
+  sleep 3
+  startTelnet
+  sleep 2
+  setAdminPasswords
   sleep 3
   cd ./tests/ && python3 generator.py -o $ORGS -p $PEERS && cd ..
   mv ./tests/docker_compose_test.yml ./network/docker-compose.yml
