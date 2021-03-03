@@ -133,8 +133,11 @@ def execute_strategies(strategies: list, ports: list, path: str):
         strategy = json.loads(strategy)
         if strategy['name'] in strategies:
             if strategy['name'] == "CP":
-                for port in ports:
-                    commands.append(strategy['commands'].replace("XXXXXX", str(port)))
+                if strategy['system'] == "ubuntu" and env("OS") == "ubuntu":
+                    for port in ports:
+                        commands.append(strategy['commands'].replace("XXXXXX", str(port)))
+                elif strategy['system'] == "alpine" and env("OS") == "alpine":
+                    commands.append(strategy['commands'])
             if strategy['name'] == "DF":
                 commands.append(strategy['commands'].replace("XXXXX", path))
             if strategy['name'] in ["R", "F"]:
