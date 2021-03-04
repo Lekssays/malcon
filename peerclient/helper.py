@@ -176,10 +176,9 @@ def register_target_peer():
     r.sadd("registred", "yes")
     return send_transaction(address=address, message=message, tag=get_tag("TARPEER"))
 
-def get_election(election_id: str):
-    tx_elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
-    for election in tx_elections:
-        if election.timestamp >= 1609455600:
-            election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
-            if election['election_id'] == election_id:
-                return election
+def get_election(tx_hash: str):
+    bundle = API.get_bundles(tx_hash)
+    message = bundle['bundles'][0].tail_transaction.signature_message_fragment
+    message = message.decode()
+    return json.loads(message)
+

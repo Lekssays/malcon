@@ -30,17 +30,17 @@ def elections():
         tx_hash = data[1].decode()
         if utils.parse_tag(tag=data[12].decode()) == utils.get_tag(resource="ELEC"):
             election = utils.read_transaction(tx_hash=tx_hash)
+            utils.store_election(election_id=election['election_id'], tx_hash=tx_hash)
             response = utils.broadcast_request(election_id=election['election_id'])
+            print(response)
             if response:
                 message = "MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id'])
                 print(message)
                 loop.run_until_complete(utils.send_log(message))
-                is_initiated = utils.initiate_elec(election_id=election['election_id'])
-                if is_initiated:
-                    message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
-                    print(message)
-                    loop.run_until_complete(utils.send_log(message))
-                    utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
+                message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
+                print(message)
+                loop.run_until_complete(utils.send_log(message))
+                utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
 
 def requests():
     socket = utils.get_socket_connection()

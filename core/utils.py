@@ -147,13 +147,11 @@ def get_peer_endpoint(peer: str):
             return "http://" + endpoint
 
 def store_voting_peers(origin: str):
-    peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
-    for peer in peers:
-        if peer.timestamp >= 1609455600:
-            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-            if peer['core_id'] != origin:
-                r.sadd('voting_peers', str(peer))
-                r.sadd('endpoints', str(peer['endpoint']))
+    peers_ports = load_peers_ports()
+    for e in peers_ports:
+        if e['peer'] != origin:
+            r.sadd('voting_peers', str(e['peer']))
+            r.sadd('endpoints', str(e['peer'] + ":" + str(e['ports']['web'])))
 
 def get_voting_peers():
     voters = list(r.smembers('voting_peers'))
@@ -226,12 +224,6 @@ def send_token(executor: str, election_id: str):
 def store_token(token: str, election_id: str):
     r.sadd(election_id + "_token", str(token))
 
-def initiate_elec(election_id: str):
-    if not r.exists(election_id + "_init"):
-        r.sadd(election_id + "_init", 1)
-        return True
-    return False
-
 def is_elec_final(election_id: str, eround: int):
     votes = get_votes(election_id=election_id, eround=eround)
     leaderboard = defaultdict(lambda : 0)
@@ -271,18 +263,15 @@ def load_peers_ports():
     return peers_ports
 
 def broadcast_request(election_id: str):
-    peers = get_voting_peers()
     count = 0
     peers_ports = load_peers_ports()
     for e in peers_ports:
-        for peer in peers:
-            if e['peer'] == peer:
-                port = e['ports']['redis']
-                rr = redis.Redis(host=peer, port=port)
-                if not rr.exists(election_id + "_init"):
-                    rr.sadd(election_id + "_init", 1)
-                    count += 1
-    if count == len(peers):
+        port = e['ports']['redis']
+        rr = redis.Redis(host=e['peer'], port=port)
+        if not rr.exists(election_id + "_init"):
+            rr.sadd(election_id + "_init", 1)
+            count += 1
+    if count == len(peers_ports):
         return True
     return False
 
@@ -346,3 +335,6 @@ def get_tags() -> list:
 def parse_tag(tag: str) -> str:
     tag = tag.split("9")
     return tag[0]
+
+def store_election(election_id: str, tx_hash: str):
+    r.sadd(election_id + "_hash", str(tx_hash))

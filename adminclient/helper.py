@@ -38,13 +38,16 @@ def get_transactions_by_tag(tag: str, hashes: list, returnAll: bool):
                     transactions.append(tx)    
         return transactions
 
+def load_peers_ports():
+    with open("/core/peers_ports.json", "r") as f:
+        peers_ports = json.load(f)
+    return peers_ports
+
 def get_peers():
-    peers = set()
-    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
-    for peer in tx_peers:
-        if peer.timestamp >= 1609455600:
-            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-            peers.add(peer['core_id'])
+    peers = []
+    peers_ports = load_peers_ports()
+    for e in peers_ports:
+        peers.append(e['peer'])
     return list(peers)
 
 def store_token(token: str, election_id: str):
@@ -53,24 +56,33 @@ def store_token(token: str, election_id: str):
 def get_tokens(election_id: str):
     return list(r.smembers(election_id + "_token"))
 
+def get_election_hash(election_id: str):
+    tx_hash = list(r.smembers(election_id + "_hash"))
+    return tx_hash[0]
+
 def prepare_payload(election_id: str):
     tokens = get_tokens(election_id=election_id)
     tokens = list(map(lambda x: json.loads(x.decode().replace("\'", "\"")), tokens))
     issuer = env("CORE_PEER_ID")
+    election_hash = get_election_hash(election_id=election_id)
     payload = {
         "tokens": tokens,
         "election_id": election_id,
-        "issuer": issuer
+        "issuer": issuer,
+        "election_hash": election_hash.decode()
     }
     return json.dumps(payload)
 
+def get_election(tx_hash: str):
+    bundle = API.get_bundles(tx_hash)
+    message = bundle['bundles'][0].tail_transaction.signature_message_fragment
+    message = message.decode()
+    return json.loads(message)
+
 def get_target_peer(election_id: str) -> str:
-    elections = get_transactions_by_tag(tag=get_tag("ELEC"), hashes=[], returnAll=True)
-    for election in elections:
-        if election.timestamp >= 1609455600:
-            election = json.loads(election.signature_message_fragment.decode().replace("\'", "\""))
-            if election_id == election['election_id']:
-                return election['target']
+    tx_hash = get_election_hash(election_id=election_id)
+    election = get_election(tx_hash=tx_hash)
+    return election['target']
 
 def current_tokens(election_id: str) -> int:
     return len(get_tokens(election_id=election_id))

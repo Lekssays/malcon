@@ -1,18 +1,26 @@
-#!/usr/bin/env python
+import os
 import asyncio
 import websockets
 
-def write(entry: str):
-    f = open("system.log", "a")
-    f.write(entry + "\n")
-    f.close()
 
-async def hello(websocket, path):
-    message = await websocket.recv()
-    print(message)
-    write(entry=message)
+class Server:
 
-start_server = websockets.serve(hello, "0.0.0.0", 7777)
+    def get_port(self):
+        return os.getenv('WS_PORT', '7777')
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+    def get_host(self):
+        return os.getenv('WS_HOST', '0.0.0.0')
+
+
+    def start(self):
+        return websockets.serve(self.handler, self.get_host(), self.get_port())
+
+    async def handler(self, websocket, path):
+      async for message in websocket:
+        print(message)
+        await websocket.send(message)
+
+if __name__ == '__main__':
+  ws = Server()
+  asyncio.get_event_loop().run_until_complete(ws.start())
+  asyncio.get_event_loop().run_forever()

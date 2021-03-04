@@ -302,10 +302,6 @@ elif [ "${MODE}" == "clear" ]; then
 elif [ "${MODE}" == "up" ]; then
   restartNetwork
   sleep 3
-  startTelnet
-  sleep 2
-  setAdminPasswords
-  sleep 3
   cd ./tests/ && python3 generator.py -o $ORGS -p $PEERS && cd ..
   mv ./tests/docker_compose_test.yml ./network/docker-compose.yml
   cp ./tests/peers_ports.json ./core/
@@ -315,6 +311,10 @@ elif [ "${MODE}" == "up" ]; then
   networkUp
   sleep 3
   createChannel
+  sleep 3
+  startTelnet
+  sleep 2
+  setAdminPasswords
   sleep 3
   deployChaincode "malware"
   sleep 2
