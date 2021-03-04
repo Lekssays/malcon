@@ -102,6 +102,12 @@ def read_transaction( tx_hash: str):
     message = message.decode()
     return json.loads(message)
 
+def initiate_elec(election_id: str):
+    if not r.exists(election_id + "_init"):
+        r.sadd(election_id + "_init", 1)
+        return True
+    return False
+
 def send_request(tx_hash: str, election_id: str):
     request = Request()
     request.tx_hash = tx_hash
@@ -149,17 +155,12 @@ def get_peer_endpoint(peer: str):
 def store_voting_peers(origin: str):
     peers_ports = load_peers_ports()
     for e in peers_ports:
-        if e['peer'] != origin:
+        if e['peer'] != origin and "peer0" in e['peer']:
             r.sadd('voting_peers', str(e['peer']))
             r.sadd('endpoints', str(e['peer'] + ":" + str(e['ports']['web'])))
 
 def get_voting_peers():
-    voters = list(r.smembers('voting_peers'))
-    core_ids = set()
-    for voter in voters:
-        voter = json.loads(voter.decode().replace("\'", "\""))
-        core_ids.add(voter['core_id'])
-    return list(core_ids)
+    return list(map(lambda x: x.decode(), r.smembers('voting_peers')))
 
 def claim_executor(election_id: str, eround: int, votes: int, core_id: str):
     executor = Executor()
@@ -244,7 +245,6 @@ def is_elec_final(election_id: str, eround: int):
     message = "MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes))
     print(message)
     asyncio.get_event_loop().run_until_complete(send_log(message))
-    
     if len(winners) == 1 and total_votes == (len(get_voting_peers()) + 1):
         r.sadd(election_id, eround)
     
@@ -263,15 +263,16 @@ def load_peers_ports():
     return peers_ports
 
 def broadcast_request(election_id: str):
+    voting_peers = get_voting_peers()
     count = 0
     peers_ports = load_peers_ports()
     for e in peers_ports:
-        port = e['ports']['redis']
-        rr = redis.Redis(host=e['peer'], port=port)
-        if not rr.exists(election_id + "_init"):
-            rr.sadd(election_id + "_init", 1)
-            count += 1
-    if count == len(peers_ports):
+        if e['peer'] in voting_peers: 
+            rr = redis.Redis(host=e['peer'], port=e['ports']['redis'])
+            if not rr.exists(election_id + "_init"):
+                rr.sadd(election_id + "_init", 1)
+                count += 1
+    if count == len(voting_peers):
         return True
     return False
 

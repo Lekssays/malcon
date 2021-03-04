@@ -31,7 +31,6 @@ def main():
         message = "Peer {} registered! Tx hash: {}".format(core_id, register_peer_tx)
         print(message)
         loop.run_until_complete(utils.send_log(message))
-    
     # store voting peers locally
     if not r.exists('voting_peers'):
         utils.store_voting_peers(origin=env("CORE_PEER_ID"))

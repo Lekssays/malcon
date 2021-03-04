@@ -23,7 +23,6 @@ def elections():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(utils.send_log(message))
-
     while True:
         message = socket.recv()
         data = message.split()
@@ -32,15 +31,15 @@ def elections():
             election = utils.read_transaction(tx_hash=tx_hash)
             utils.store_election(election_id=election['election_id'], tx_hash=tx_hash)
             response = utils.broadcast_request(election_id=election['election_id'])
-            print(response)
             if response:
                 message = "MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id'])
                 print(message)
                 loop.run_until_complete(utils.send_log(message))
-                message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
-                print(message)
-                loop.run_until_complete(utils.send_log(message))
-                utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
+                if utils.initiate_elec(election_id=election['election_id']):
+                    message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
+                    print(message)
+                    loop.run_until_complete(utils.send_log(message))
+                    utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
 
 def requests():
     socket = utils.get_socket_connection()

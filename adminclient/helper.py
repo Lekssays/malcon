@@ -47,8 +47,9 @@ def get_peers():
     peers = []
     peers_ports = load_peers_ports()
     for e in peers_ports:
-        peers.append(e['peer'])
-    return list(peers)
+        if "peer0" in e['peer']:
+            peers.append(e['peer'])
+    return peers
 
 def store_token(token: str, election_id: str):
     r.sadd(election_id + "_token", str(token))
