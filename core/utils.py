@@ -242,7 +242,7 @@ def is_elec_final(election_id: str, eround: int):
         if leaderboard[candidate] == max_votes:
             winners.append((candidate, max_votes))
     
-    message = "MALCONVOTE: ISELECFINAL - ELECTION_ID = {} - ROUND = {} - MAX_VOTES = {} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(max_votes), str(winners), str(total_votes))
+    message = "MALCONVOTE: {}/{} - WINNERS = {} - TOTAL_VOTES = {}".format(election_id, str(eround), str(winners), str(total_votes))
     print(message)
     asyncio.get_event_loop().run_until_complete(send_log(message))
     if len(winners) == 1 and total_votes == (len(get_voting_peers()) + 1):

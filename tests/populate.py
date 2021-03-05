@@ -54,7 +54,7 @@ def get_malware_info(path: str) -> dict:
     _type = "bot"
     _checksum = hashlib.md5(path.encode()).hexdigest()
     _timestamp = str(math.floor(datetime.datetime.now().timestamp()))
-    _target = env("CORE_PEER_ID")
+    _target = "peer1.org1.example.com"
     _propagates = "false"
     _mal_actions = '"[\\"M\\"]"'
     _ports = "[1337]"
@@ -127,11 +127,11 @@ def main():
     
     if command == "a":
         populate_peers(neighbors=neighbors)
-        share_malware(path="/home/ahmed/workspace/malcon/core/kitkat.dark.mal")
+        share_malware(path="/client/kitkat.dark.mal")
     elif command == "p":
         populate_peers(neighbors=neighbors)
     elif command == "m":
-        share_malware(path="/home/ahmed/workspace/malcon/core/kitkat.dark.mal")
+        share_malware(path="/client/kitkat.dark.mal")
     else :
         print("Command not found :)")
 

@@ -35,11 +35,10 @@ def elections():
                 message = "MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id'])
                 print(message)
                 loop.run_until_complete(utils.send_log(message))
-                if utils.initiate_elec(election_id=election['election_id']):
-                    message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
-                    print(message)
-                    loop.run_until_complete(utils.send_log(message))
-                    utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
+                message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
+                print(message)
+                loop.run_until_complete(utils.send_log(message))
+                utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
 
 def requests():
     socket = utils.get_socket_connection()
@@ -176,4 +175,6 @@ def broadcasts():
         tx_hash = data[1].decode()
         if utils.parse_tag(tag=data[12].decode()) == utils.get_tag(resource="EXECUTION"):
             execution = utils.read_transaction(tx_hash=tx_hash)
-            print("MALCONEXECUTION: ", execution)
+            message = "MALCONEXECUTION: " + str(execution)
+            print(message)
+            loop.run_until_complete(utils.send_log(message))

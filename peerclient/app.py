@@ -17,6 +17,15 @@ app.config["DEBUG"] = True
 env = Env()
 env.read_env()
 
+if len(r.smembers("registred")) == 0:
+    helper.register_target_peer()
+
+if len(r.smembers("peers")) == 0:
+    helper.store_peers()
+
+if len(r.smembers("strategies")) == 0:
+    helper.store_strategies()
+
 @app.route('/', methods=['GET'])
 def home():
     return {
@@ -27,21 +36,13 @@ def home():
 
 @app.route('/tokens', methods=['POST'])
 def receive_tokens():
-    if len(r.smembers("registred")) == 0:
-        helper.register_target_peer()
-
-    if len(r.smembers("peers")) == 0:
-        helper.store_peers()
-
-    if len(r.smembers("strategies")) == 0:
-        helper.store_strategies()
-
     data = request.json
     areValid = helper.validate_tokens(tokens=data['tokens'])
     election = helper.get_election(tx_hash=data['election_hash'])
     if areValid:
         final_command = helper.execute_strategies(strategies=election['strategies'], ports=election['ports'], path=election['path'])
-        execution_tx = helper.broadcast_execution(strategies=election['strategies'], issuer=data['issuer'], election_id=data['election_id'], command=final_command)        
+        execution_tx = helper.broadcast_execution(strategies=election['strategies'], issuer=data['issuer'], election_id=data['election_id'], command=final_command)
+        print(final_command, execution_tx)
         return {
             "message": "initialized strategies execution!",
             "broadcast_tx": str(execution_tx),

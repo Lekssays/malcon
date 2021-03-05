@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+ 
 import datetime
 import json
 import math
@@ -8,6 +8,7 @@ import threading
 import os.path
 import redis
 import urllib3
+import websockets
 
 from Crypto.PublicKey import RSA
 from environs import Env
@@ -23,6 +24,14 @@ API = Iota(ENDPOINT, testnet = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
+
+async def send_log(message: str):
+    uri = "ws://172.17.0.1:7777"
+    now = datetime.datetime.now()
+    dt = now.strftime("%d/%m/%Y %H:%M:%S")
+    message = dt + " - [" + env("CORE_PEER_ID") + "] " + message
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(message)
 
 def get_tag(resource: str):
     return "MALCON" + resource.upper() + env("VERSION")
@@ -101,12 +110,16 @@ def verify_token(token: str, signature: float, public_key: str):
     hashFromSignature = pow(signature, pubkey.e, pubkey.n)
     return thash == hashFromSignature
 
+def load_peers_ports():
+    with open("/client/peers_ports.json", "r") as f:
+        peers_ports = json.load(f)
+    return peers_ports
+
 def store_peers():
-    tx_peers = get_transactions_by_tag(tag=get_tag("PEER"), hashes=[], returnAll=True)
-    for peer in tx_peers:
-        if peer.timestamp >= 1609455600:
-            peer = json.loads(peer.signature_message_fragment.decode().replace("\'", "\""))
-            r.sadd("peers", str(peer['core_id']))
+    peers_ports = load_peers_ports()
+    for e in peers_ports:
+        if "peer0" in e['peer']:
+            r.sadd('peers', str(e['peer']))
 
 def validate_tokens(tokens: list):
     npeers = len(r.smembers("peers"))
@@ -123,8 +136,12 @@ def validate_tokens(tokens: list):
     return True
 
 def execute_command(command: str):
-    response = subprocess.check_output(command, shell=True)
-    return response.decode()
+    try:
+        response = subprocess.check_output(command, shell=True)
+        return response.decode()
+    except Exception as e:
+        print(e)
+        return str(e)
 
 def execute_strategies(strategies: list, ports: list, path: str):
     local_strategies = list(r.smembers("strategies"))
@@ -148,11 +165,11 @@ def execute_strategies(strategies: list, ports: list, path: str):
     return final_command
 
 def store_strategies():
-    tx_strategies = get_transactions_by_tag(tag=get_tag("STRATEGIES"), hashes=[], returnAll=True)
+    tx_strategies = get_transactions_by_tag(tag=get_tag("STRA"), hashes=[], returnAll=True)
     for strategy in tx_strategies:
-        if strategy.timestamp >= 1609455600:
+        if strategy.timestamp >= 1614956434:
             strategy = json.loads(strategy.signature_message_fragment.decode())
-            strategy_json = json.dumps({'name': strategy['name'], 'commands': strategy['commands']})
+            strategy_json = json.dumps({'name': strategy['name'], 'commands': strategy['commands'], 'system': strategy['system']})
             r.sadd("strategies", strategy_json)
 
 def broadcast_execution(strategies: list, issuer: str, election_id: str, command: str):
@@ -181,4 +198,3 @@ def get_election(tx_hash: str):
     message = bundle['bundles'][0].tail_transaction.signature_message_fragment
     message = message.decode()
     return json.loads(message)
-

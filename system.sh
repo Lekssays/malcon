@@ -133,6 +133,17 @@ function generateKeys() {
   done  
 }
 
+function killEndpoints() {
+  for orgId in $(seq $ORGS);
+  do
+    for ((peerId=0; peerId<$PEERS; peerId++));
+    do
+      echo "killing endpoint on peer0.org$orgId.example.com..."
+      docker exec -d peer0.org$orgId.example.com /bin/sh -c "pkill -f 'python3 /client/app.py'"  
+    done
+  done
+}
+
 function runEndpoints() {
   for orgId in $(seq $ORGS);
   do
@@ -151,6 +162,7 @@ function runGateways() {
     docker exec -d peer0.org$orgId.example.com /bin/sh -c "pip3 install websockets asyncio && python3 /core/gateway.py"  
   done
 }
+
 
 function startTelnet() {
   for orgId in $(seq $ORGS);
@@ -305,6 +317,7 @@ elif [ "${MODE}" == "up" ]; then
   cd ./tests/ && python3 generator.py -o $ORGS -p $PEERS && cd ..
   mv ./tests/docker_compose_test.yml ./network/docker-compose.yml
   cp ./tests/peers_ports.json ./core/
+  cp ./tests/peers_ports.json ./peerclient/
   sleep 3
   generateBlocks
   sleep 2
@@ -348,6 +361,8 @@ elif [ "${MODE}" == "runGateways" ]; then
   runGateways
 elif [ "${MODE}" == "killGateways" ]; then
   killGateways
+elif [ "${MODE}" == "killEndpoints" ]; then
+  killEndpoints
 else
   printHelp
   exit 1
