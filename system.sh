@@ -333,6 +333,9 @@ elif [ "${MODE}" == "up" ]; then
   runGateways
   sleep 3
   cd ./tests/ && python3 health_check.py
+  sleep 2
+  python3 populate.py -c p
+  cd ..
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
 elif [ "${MODE}" == "deployW" ]; then

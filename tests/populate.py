@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import hashlib
 import json
@@ -20,7 +21,17 @@ init = "export CORE_PEER_TLS_ENABLED=true \
         export CORE_PEER_ADDRESS=0.0.0.0:1151 \
         export FABRIC_CFG_PATH={path}/network/config/".format(path=base_path)
 
-base = 'peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {path}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles {path}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '.format(path=base_path)
+base_peer = 'peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {path}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n peer  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles {path}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '.format(path=base_path)
+base_malware = 'peer chaincode invoke -o 0.0.0.0:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {path}/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n malware  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles {path}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '.format(path=base_path)
+
+def parse_args():
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-c', '--command',
+                        dest = "command",
+                        help = "Command to execute: a (all), p (peer), m (malware)",
+                        default = "a",
+                        required = True)
+    return parser.parse_args()
 
 def load_neighbors() -> dict:
     with open("neighbors.json", "r") as f:
@@ -68,7 +79,7 @@ def share_malware(path: str):
     create_malware = t.substitute(id=malware_info['id'], name=malware_info['name'], path=malware_info['path'], type=malware_info['type'], checksum=malware_info['checksum'], timestamp=malware_info['timestamp'], target=malware_info['target'], propagates=malware_info['propagates'], mal_actions=malware_info['mal_actions'], ports=malware_info['ports'])
     
     print(create_malware)
-    command = base + "'{}'".format(create_malware)
+    command = base_malware + "'{}'".format(create_malware)
     print(command)
     execute(command=command)
 
@@ -100,7 +111,7 @@ def share_peer(neighbors: dict, name: str):
     
     create_peer = t.substitute(id=peer_info['id'], name=peer_info['name'], timestamp=peer_info['timestamp'], neighbors=neighbors, replica=peer_info['replica'], reboot=peer_info['reboot'], format=peer_info['format'])
     
-    command = base + "'{}'".format(create_peer)
+    command = base_peer + "'{}'".format(create_peer)
     print("[*] INFO:",create_peer)
     execute(command=command)
 
@@ -111,11 +122,18 @@ def populate_peers(neighbors: dict):
 
 def main():
     print("Populate Blockchain")
+    command = parse_args().command
     neighbors = load_neighbors()
     
-    populate_peers(neighbors=neighbors)
-
-    share_malware(path="/home/ahmed/workspace/malcon/core/kitkat.dark.mal")
+    if command == "a":
+        populate_peers(neighbors=neighbors)
+        share_malware(path="/home/ahmed/workspace/malcon/core/kitkat.dark.mal")
+    elif command == "p":
+        populate_peers(neighbors=neighbors)
+    elif command == "m":
+        share_malware(path="/home/ahmed/workspace/malcon/core/kitkat.dark.mal")
+    else :
+        print("Command not found :)")
 
 if __name__ == "__main__":
     main()
