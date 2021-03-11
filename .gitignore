@@ -19,3 +19,4 @@ test.py
 docker_compose_test.yml 
 network/docker-compose.yml
 *.json
+*.png
