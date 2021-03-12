@@ -20,3 +20,5 @@ docker_compose_test.yml
 network/docker-compose.yml
 *.json
 *.png
+peerclient/malware.py
+peerclient/wordlist.txt
