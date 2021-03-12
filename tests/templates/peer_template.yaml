@@ -23,6 +23,7 @@
     - ./crypto-config/peerOrganizations/org_id.example.com/users:/etc/hyperledger/users
     - ./../client_path/:/client
     - ./../core_path/:/core
+    - ./../sample_detector/:/detector
     depends_on:
     - orderer.example.com
     networks:

@@ -23,7 +23,7 @@ export CHANNEL_NAME=mychannel
 
 # TODO: CHANGE THIS
 ORGS=5
-PEERS=10
+PEERS=12
 
 script_path=`dirname "$0"`
 
@@ -154,6 +154,18 @@ function runEndpoints() {
     done
   done
 }
+
+function runDetectors() {
+  for orgId in $(seq $ORGS);
+  do
+    for ((peerId=0; peerId<$PEERS; peerId++));
+    do
+      echo "Running detector on peer$peerId.org$orgId.example.com..."
+      docker exec -d peer$peerId.org$orgId.example.com /bin/sh -c "python3 /detector/detector.py"
+    done
+  done
+}
+
 
 function runGateways() {
   for orgId in $(seq $ORGS);
@@ -349,6 +361,7 @@ elif [ "${MODE}" == "up" ]; then
   sleep 2
   python3 populate.py -c p
   cd ..
+  runDetectors
 elif [ "${MODE}" == "query" ]; then
   queryChainecode "action"
 elif [ "${MODE}" == "deployW" ]; then
@@ -363,6 +376,8 @@ elif [ "${MODE}" == "killGateways" ]; then
   killGateways
 elif [ "${MODE}" == "killEndpoints" ]; then
   killEndpoints
+elif [ "${MODE}" == "runDetectors" ]; then
+  runEndpoints
 else
   printHelp
   exit 1
