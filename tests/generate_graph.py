@@ -47,9 +47,14 @@ def generate_graph(neighbors: list):
     labels = generate_labels(peers=peers)
     admins = []
     normal = []
+    infected = ['peer8.org1.example.com', 'peer6.org2.example.com', 'peer3.org2.example.com']
+    targets = []
+
     for peer in peers:
         if "peer0" in peer:
             admins.append(peer)
+        elif peer in targets:
+            infected.append(peer)
         else:
             normal.append(peer)
 
@@ -62,8 +67,10 @@ def generate_graph(neighbors: list):
     pos = nx.planar_layout(G)
     options = {"node_size": 50, "alpha": 0.8}
     
-    nx.draw_networkx_nodes(G, pos, nodelist=admins, node_color="r", **options)
-    nx.draw_networkx_nodes(G, pos, nodelist=normal, node_color="y", **options)
+    
+    nx.draw_networkx_nodes(G, pos, nodelist=normal, node_color="#00f021", **options)
+    nx.draw_networkx_nodes(G, pos, nodelist=infected, node_color="#b50005", **options)
+    nx.draw_networkx_nodes(G, pos, nodelist=admins, node_color="#f6f600", **options)
     nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.5)
     nx.draw_networkx_labels(G,pos, labels, font_size=8, font_color='b')
 
