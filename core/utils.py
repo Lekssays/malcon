@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import asyncio
-import datetime
 import json
 import math
 import os.path
@@ -22,18 +21,18 @@ from iota import Address
 from iota import Tag
 from iota import TryteString
 
+from datetime import datetime
 from models import Vote, Peer, Request, Executor, Strategy
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
-API = Iota(ENDPOINT, testnet = True)
+API = Iota(adapter = ENDPOINT, testnet = True)
 env = Env()
 env.read_env()
 r = redis.Redis(host="0.0.0.0", port=env.int("CORE_PEER_REDIS_PORT"))
 
 async def send_log(message: str):
     uri = "ws://172.17.0.1:7777"
-    now = datetime.datetime.now()
-    dt = now.strftime("%d/%m/%Y %H:%M:%S")
+    dt = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
     message = dt + " - [" + env("CORE_PEER_ID") + "] " + message
     async with websockets.connect(uri) as websocket:
         await websocket.send(message)
@@ -321,7 +320,7 @@ def execute_strategy(ports: list):
 
 def get_socket_connection():
     context = zmq.Context()
-    socket = context.socket(zmq.SUB)
+    socket = context.socket(socket_type=2)
     socket.connect('tcp://zmq.devnet.iota.org:5556')
     socket.subscribe('tx')
     return socket
