@@ -22,13 +22,8 @@ export CCVERSION=1.0
 export CHANNEL_NAME=mychannel
 
 # TODO: CHANGE THIS
-<<<<<<< HEAD
-ORGS=3
-PEERS=2
-=======
 ORGS=10
 PEERS=5
->>>>>>> add exp for 10 orgs
 
 script_path=`dirname "$0"`
 
@@ -93,17 +88,10 @@ function generateBlocks() {
   if test -f "$CHANNEL_NAME.tx"; then
       rm $CHANNEL_NAME.tx
   fi
-<<<<<<< HEAD
-  configtxgen -outputBlock genesis.block -profile ThreeOrgsOrdererGenesis -channelID system-channel -configPath=.
-
-  echo "Generating channel block..."
-  configtxgen -profile ThreeOrgsChannel -outputCreateChannelTx $CHANNEL_NAME.tx -channelID $CHANNEL_NAME -configPath=.
-=======
   configtxgen -outputBlock genesis.block -profile TenOrgsOrdererGenesis -channelID system-channel -configPath=.
 
   echo "Generating channel block..."
   configtxgen -profile TenOrgsChannel -outputCreateChannelTx $CHANNEL_NAME.tx -channelID $CHANNEL_NAME -configPath=.
->>>>>>> add exp for 10 orgs
 }
 
 function networkUp() {
@@ -254,15 +242,6 @@ function deployChaincode() {
   for orgId in $(seq $ORGS);
   do
     setVariables $orgId
-<<<<<<< HEAD
-    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
-  done
-
-  echo "Check for $1 commit readiness..."
-  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')" --output json
-  echo "Committing $1 chaincode definition to channel..."
-  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
-=======
     peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member', 'Org6MSP.member','Org7MSP.member', 'Org8MSP.member', 'Org9MSP.member', 'Org10MSP.member')"
   done
 
@@ -270,7 +249,6 @@ function deployChaincode() {
   peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member', 'Org6MSP.member','Org7MSP.member', 'Org8MSP.member', 'Org9MSP.member', 'Org10MSP.member')" --output json
   echo "Committing $1 chaincode definition to channel..."
   peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1651 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org6.example.com/peers/peer0.org6.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1751 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org7.example.com/peers/peer0.org7.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1851 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org8.example.com/peers/peer0.org8.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1951 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org9.example.com/peers/peer0.org9.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org10.example.com/peers/peer0.org10.example.com/tls/ca.crt --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member', 'Org6MSP.member','Org7MSP.member', 'Org8MSP.member', 'Org9MSP.member', 'Org10MSP.member')"
->>>>>>> add exp for 10 orgs
   peer lifecycle chaincode querycommitted --channelID $CHANNEL_NAME --name $1 --cafile $ORDERER_CA
 }
 
@@ -278,11 +256,7 @@ function invokeChaincode() {
   cd $PROJECT_DIRECTORY
   setVariables 1
   echo "Invoke $1 chaincode..."
-<<<<<<< HEAD
-  peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
-=======
   peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1651 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org6.example.com/peers/peer0.org6.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1751 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org7.example.com/peers/peer0.org7.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1851 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org8.example.com/peers/peer0.org8.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1951 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org9.example.com/peers/peer0.org9.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1051 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org10.example.com/peers/peer0.org10.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
->>>>>>> add exp for 10 orgs
 }
 
 function queryChainecode() {
