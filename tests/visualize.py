@@ -25,14 +25,14 @@ def get_label(peer: str) -> str:
     if len(pid) == 5:
         label += pid[-1]
     elif len(pid) == 6:
-        label += pid[4:5]
+        label += pid[4:]
     
     label += "/"
 
     if len(oid) == 4:
         label += oid[-1]
-    elif len(pid) == 5:
-        label += pid[3:4]
+    elif len(oid) == 5:
+        label += pid[3:]
 
     return label    
 
@@ -47,7 +47,7 @@ def generate_graph(neighbors: list):
     labels = generate_labels(peers=peers)
     admins = []
     normal = []
-    infected = ['peer8.org1.example.com', 'peer6.org2.example.com', 'peer3.org2.example.com']
+    infected = []
     targets = []
 
     for peer in peers:
