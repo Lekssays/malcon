@@ -22,8 +22,8 @@ export CCVERSION=1.0
 export CHANNEL_NAME=mychannel
 
 # TODO: CHANGE THIS
-ORGS=5
-PEERS=12
+ORGS=3
+PEERS=2
 
 script_path=`dirname "$0"`
 
@@ -88,10 +88,10 @@ function generateBlocks() {
   if test -f "$CHANNEL_NAME.tx"; then
       rm $CHANNEL_NAME.tx
   fi
-  configtxgen -outputBlock genesis.block -profile FiveOrgsOrdererGenesis -channelID system-channel -configPath=.
+  configtxgen -outputBlock genesis.block -profile ThreeOrgsOrdererGenesis -channelID system-channel -configPath=.
 
   echo "Generating channel block..."
-  configtxgen -profile FiveOrgsChannel -outputCreateChannelTx $CHANNEL_NAME.tx -channelID $CHANNEL_NAME -configPath=.
+  configtxgen -profile ThreeOrgsChannel -outputCreateChannelTx $CHANNEL_NAME.tx -channelID $CHANNEL_NAME -configPath=.
 }
 
 function networkUp() {
@@ -242,13 +242,13 @@ function deployChaincode() {
   for orgId in $(seq $ORGS);
   do
     setVariables $orgId
-    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')"
+    peer lifecycle chaincode approveformyorg -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
   done
 
   echo "Check for $1 commit readiness..."
-  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')" --output json
+  peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')" --output json
   echo "Committing $1 chaincode definition to channel..."
-  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member', 'Org4MSP.member', 'Org5MSP.member')"
+  peer lifecycle chaincode commit -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --channelID $CHANNEL_NAME --name $1 --version $CCVERSION --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --signature-policy "OR ('Org1MSP.member','Org2MSP.member', 'Org3MSP.member')"
   peer lifecycle chaincode querycommitted --channelID $CHANNEL_NAME --name $1 --cafile $ORDERER_CA
 }
 
@@ -256,7 +256,7 @@ function invokeChaincode() {
   cd $PROJECT_DIRECTORY
   setVariables 1
   echo "Invoke $1 chaincode..."
-  peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1451 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1551 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
+  peer chaincode invoke -o $ORDERER_ADDRESS --ordererTLSHostnameOverride $ORDERER_HOSTNAME --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $1  --peerAddresses 0.0.0.0:1151 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1251 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt --peerAddresses 0.0.0.0:1351 --tlsRootCertFiles ${PWD}/network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt -c '{"function":"InitLedger","Args":[]}'
 }
 
 function queryChainecode() {
