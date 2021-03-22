@@ -23,7 +23,7 @@ export CHANNEL_NAME=mychannel
 
 # TODO: CHANGE THIS
 ORGS=10
-PEERS=5
+PEERS=2
 
 script_path=`dirname "$0"`
 
