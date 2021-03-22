@@ -21,7 +21,7 @@ from iota import Address
 from iota import Tag
 from iota import TryteString
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from models import Vote, Peer, Request, Executor, Strategy
 
 ENDPOINT = 'https://nodes.devnet.iota.org:443'
@@ -75,7 +75,7 @@ def get_transactions_by_tag(tag: str, hashes: list, returnAll: bool):
         transactions = []
         for tx in results['transactions']:
             for tx_hash in hashes:
-                cur_timestamp = math.floor(datetime.datetime.now().timestamp())
+                cur_timestamp = math.floor(datetime.now().timestamp())
                 if tx_hash == str(tx.hash) and cur_timestamp - int(tx.timestamp) < 300:
                     transactions.append(tx)    
         return transactions
@@ -171,7 +171,7 @@ def claim_executor(election_id: str, eround: int, votes: int, core_id: str):
     return send_transaction(address=address, message=message, tag=get_tag("EXEC"))
 
 def generate_token():
-    timestamp = datetime.datetime.now() + datetime.timedelta(seconds=500)
+    timestamp = datetime.now() + timedelta(seconds=500)
     timestamp = str(timestamp.timestamp())
     nonce = str(random.randint(100000, 999999))
     token = nonce + "_" + timestamp
