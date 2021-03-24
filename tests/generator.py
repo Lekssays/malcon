@@ -46,8 +46,19 @@ def generate_peers(orgs: int, peers: int) -> list:
 
 def get_org_id(peer: str):
     org = peer.split(".")
-    org = org[1].split("org")
-    return org[1][-1]
+    return org[1][3:]
+
+def get_gossip_port(org_id: str) -> int:
+    gossip_port = ""
+    if int(org_id) <= 9:
+        gossip_port = "1" + org_id + "51"
+    elif int(org_id) == 10:
+        gossip_port = "1051"
+    elif int(org_id) >= 11 and int(org_id) <= 19:
+        gossip_port = "2" + org_id[1] + "51"
+    elif int(org_id) == 20:
+        gossip_port = "2051"
+    return int(gossip_port)
 
 def is_admin(peer: str):
     peer = peer.split(".")
@@ -67,12 +78,16 @@ def generate_ports(peers: list) -> list:
         GOSSIP_PORTS.remove(gossip_port)
         operations_port = OPERATIONS_PORTS[random.randint(0, len(OPERATIONS_PORTS) - 1)]
         OPERATIONS_PORTS.remove(operations_port)
+
+        if(is_admin(peer=peer)):
+            gossip_port = get_gossip_port(org_id=get_org_id(peer=peer))
+        
         peer_dict = {
             'peer': peer,
             'ports': {
                 'redis': redis_port,
                 'web': web_port,
-                'gossip': int("1" + get_org_id(peer=peer) + "51") if is_admin(peer=peer) else gossip_port,
+                'gossip': gossip_port,
                 'operations': operations_port
             }
         }

@@ -117,3 +117,113 @@ PeerOrgs:
         - "0.0.0.0"
     Users:
       Count: 1
+
+  - Name: Org11
+    Domain: org11.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org12
+    Domain: org12.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org13
+    Domain: org13.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org14
+    Domain: org14.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org15
+    Domain: org15.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org16
+    Domain: org16.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org17
+    Domain: org17.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+  
+  - Name: Org18
+    Domain: org18.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org19
+    Domain: org19.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
+
+  - Name: Org20
+    Domain: org20.example.com
+    Template:
+      Count: 50
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+        - "0.0.0.0"
+    Users:
+      Count: 1
