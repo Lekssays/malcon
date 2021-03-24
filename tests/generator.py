@@ -148,11 +148,13 @@ def generate_neighbors(peers: list, topology: str, org_peers: defaultdict):
                 continue
             neighbors[peer].append(admin)
     elif topology == "FC":
-        orgs = list(org_peers.keys())
-        for org in orgs:
-            for peer in org_peers[org]:
-                neighbors[peer] = org_peers[org]
-
+        for u in bucket:
+            for v in bucket:
+                if u != v:
+                    if v not in neighbors[u]:
+                        neighbors[u].append(v)
+                    if u not in neighbors[v]:
+                        neighbors[v].append(u)
     elif topology == "M":
         limit = len(peers) if len(peers) <= 7 else 7
         for peer in peers:
