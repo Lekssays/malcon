@@ -60,6 +60,8 @@ function setVariables() {
   orgId=$1
   if [ $orgId = 10 ]; then
     port=1051
+  elif [ $orgId = 20 ]; then
+    port=2051
   else
     port=$((1051+orgId*100))
   fi
