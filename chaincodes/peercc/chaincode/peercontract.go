@@ -26,16 +26,14 @@ type SmartContract struct {
 type Process struct {
 	PID        string `json:"ID"`
 	Replicated bool   `json:"replicated"`
-	Formatting bool   `json:"formatting"`
 	Rebooting  bool   `json:"rebooting"`
 }
 
 // Peer defines the structure of a peer entry
 type Peer struct {
-	ID         string   `json:"ID"`
-	Neighbors  []string `json:"neighbors"`
-	LastUpdate string   `json:"last_update"`
-	Process    Process  `json:"critical_process"`
+	ID         string  `json:"ID"`
+	LastUpdate string  `json:"last_update"`
+	Process    Process `json:"critical_process"`
 }
 
 // InitLedger adds a base set of peer entries to the ledger
@@ -43,23 +41,19 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	peers := []Peer{
 		{
 			ID:         "peerX.org1.example.com",
-			Neighbors:  []string{"peerY.org2.example.com"},
 			LastUpdate: "1622359874",
 			Process: Process{
 				PID:        "temperature.sh",
 				Replicated: true,
-				Formatting: true,
 				Rebooting:  true,
 			},
 		},
 		{
 			ID:         "peerZ.org3.example.com",
-			Neighbors:  []string{"peerY.org2.example.com"},
 			LastUpdate: "16223598589",
 			Process: Process{
 				PID:        "pressure.exe",
 				Replicated: false,
-				Formatting: false,
 				Rebooting:  false,
 			},
 		},
@@ -81,7 +75,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // CreatePeer issues a new peer entry to the world state with given details.
-func (s *SmartContract) CreatePeer(ctx contractapi.TransactionContextInterface, id string, neighbors []string, lastUpdate string, pid string, replicated bool, formatting bool, rebooting bool) error {
+func (s *SmartContract) CreatePeer(ctx contractapi.TransactionContextInterface, id string, lastUpdate string, pid string, replicated bool, rebooting bool) error {
 	exists, err := s.PeerExists(ctx, id)
 	if err != nil {
 		return err
@@ -93,12 +87,10 @@ func (s *SmartContract) CreatePeer(ctx contractapi.TransactionContextInterface, 
 
 	peer := Peer{
 		ID:         id,
-		Neighbors:  neighbors,
 		LastUpdate: lastUpdate,
 		Process: Process{
 			PID:        pid,
 			Replicated: replicated,
-			Formatting: formatting,
 			Rebooting:  rebooting,
 		},
 	}

@@ -45,13 +45,11 @@ def main():
 
     # Start all listeners
     elec_thread = threading.Thread(target=listeners.elections)
-    reqs_thread = threading.Thread(target=listeners.requests)
     votes_thread = threading.Thread(target=listeners.votes)
     exec_thread = threading.Thread(target=listeners.executors)
     emerg_thread = threading.Thread(target=listeners.emergency)
     broad_thread = threading.Thread(target=listeners.broadcasts)
     elec_thread.start()
-    reqs_thread.start()
     votes_thread.start()
     exec_thread.start()
     emerg_thread.start()

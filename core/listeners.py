@@ -18,30 +18,6 @@ TIME = 0
 
 def elections():
     socket = utils.get_socket_connection()
-    message = "Listening on MALCONELEC tag..."
-    print(message)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(utils.send_log(message))
-    while True:
-        message = socket.recv()
-        data = message.split()
-        tx_hash = data[1].decode()
-        if utils.parse_tag(tag=data[12].decode()) == utils.get_tag(resource="ELEC"):
-            election = utils.read_transaction(tx_hash=tx_hash)
-            utils.store_election(election_id=election['election_id'], tx_hash=tx_hash)
-            response = utils.broadcast_request(election_id=election['election_id'])
-            if response:
-                message = "MALCONELEC: Registering election request with id {} LOCALLY".format(election['election_id'])
-                print(message)
-                loop.run_until_complete(utils.send_log(message))
-                message = "MALCONELEC: Registering election request with id {} on BLOCKCHAIN".format(election['election_id'])
-                print(message)
-                loop.run_until_complete(utils.send_log(message))
-                utils.send_request(tx_hash=tx_hash, election_id=election['election_id'])
-
-def requests():
-    socket = utils.get_socket_connection()
     message = "Listening on MALCONREQ tag..."
     print(message)
     loop = asyncio.new_event_loop()
@@ -52,14 +28,15 @@ def requests():
         data = message.split()
         tx_hash = data[1].decode()
         if utils.parse_tag(tag=data[12].decode()) == utils.get_tag(resource="REQ"):
-            request = utils.read_transaction(tx_hash=tx_hash)
+            election = utils.read_transaction(tx_hash=tx_hash)
+            utils.store_election(election_id=election['election_id'], tx_hash=tx_hash)
             message = "MALCONREQ: Sending vote..."
             print(message)
             loop.run_until_complete(utils.send_log(message))
             candidates = utils.get_voting_peers()
             candidate = candidates[random.randint(0, len(candidates) - 1)]
-            utils.send_vote(candidate=candidate, election_id=request['election_id'], eround=1)
-            message = "MALCONREQ: Peer {} voted successfully on candidate {} in election {} round 1".format(env("CORE_PEER_ID"), candidate, request['election_id'])
+            utils.send_vote(candidate=candidate, election_id=election['election_id'], eround=1)
+            message = "MALCONREQ: Peer {} voted successfully on candidate {} in election {} round 1".format(env("CORE_PEER_ID"), candidate, election['election_id'])
             print(message)
             loop.run_until_complete(utils.send_log(message))
 
